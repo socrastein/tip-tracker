@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google Font: Ubuntu - 300 & 700 weight -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>">
+    <title>Tip Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+
+<body>
+
+    
+    <div id="blurContainer" class="hidden"></div>
+    <div id="mainContainer" class="flexColumn">
+        
+        <p id="systemMessage">$ TIP TRACKER $</p>
+        
+        <div id="addTipContainer" class="flexColumn softBorder hidden">
+
+            <!-- Close addTip window -->
+            <span id="addTipExit">
+                <p id="addTipTitle">NEW TIP</p>
+                <img class="smallIcon" id="addTipExitIcon" onclick="closeTipWindow()"
+                src="./icons/close.svg">
+            </span>
+    
+            <form id="addTipForm" class="flexColumn">
+                <!-- Add Amount -->
+                <div class="formPair">
+                    <input type="number" id="addTipAmount" name="Tip Amount" min="1" 
+                    placeholder="$ ">
+                </div>
+    
+                <!-- Add Date -->
+                <div class="formPair">
+                    <input type="date" id="addTipDate" name="Tip Date">
+                </div>
+    
+                <!-- Select Type -->
+                <div class="formPair">
+                    <select id="addTipType" name="type">
+                        <option value="Banquet">Banquet</option>
+                        <option value="Floor">Floor</option>
+                    </select>
+                </div>
+    
+                <!-- Select Cash -->
+                <div class="formPair">
+                    <label for="addTipCash">Cash</label>
+                    <input type="checkbox" id="addTipCash" name="Tip Cash" value="true">
+                </div>
+            </form>
+            <!-- Confirm addTip -->
+            <span id="addTipAccept">
+                <img class="smallIcon" id="addTipAcceptButton" onclick="confirmNewTip()"
+                src="./icons/check.svg">
+            </span>
+        </div>
+
+        <button id="addTipButton" class="softBorder" onclick="addTipWindow()">
+            💸
+        </button>
+
+        <div id="historyContainer" class="flexColumn">
+        </div>
+
+        <button href="#dateContainer" id="scrollToTopButton" class="hidden" onclick=scrollToTop()>
+            ^
+        </button>
+
+    </div>
+
+
+    <footer>
+        Copyright &copy 2023 Matt Talley (socrastein) 
+        <a href="https://github.com/socrastein" target="_blank">
+            <img id="gitLogo" src="github.svg">
+        </a>
+    </footer>
+</body>
+</html>
+

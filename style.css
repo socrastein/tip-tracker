@@ -1,0 +1,294 @@
+* {
+    font-family: 'Ubuntu', sans-serif;
+    background-color: rgb(245,245,245);
+    color: #212121;
+    box-sizing: border-box;
+}
+
+h1, h2, h3, p {
+    margin: 0;
+}
+
+body {
+    margin: 0;
+}
+
+@keyframes logoRotation {
+    from {
+        transform: scale(1) rotate(0);
+    }
+
+    to {
+        transform: scale(1.2) rotate(720deg);
+    }
+}
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+        background-color: transparent;
+    }
+}
+
+.fadeOut {
+    animation: fadeOut 2s ease forwards;
+}
+
+.fadeIn {
+    animation: fadeIn 2s ease forwards;
+}
+
+.flexColumn {
+    display: flex;
+    flex-direction: column;
+}
+
+.softBorder {
+    border-style: solid;
+    border-width: 2px;
+    border-radius: 12px;
+    padding: 8px;
+}
+
+.hidden {
+    display: none;
+}
+
+#systemMessage {
+    z-index: 50;
+    position: absolute;
+    top: 8px;
+    display: flex;
+    align-items: center;
+    color: lightseagreen;
+    font-weight: bold;
+    font-size: 1.5rem;
+    height: 3rem;
+    padding: .5rem 1rem;
+    border-radius: 12px;
+    background-color: rgba(33,33,33,.75);
+}
+
+#blurContainer {
+    z-index: 25;
+    position: fixed;
+    backdrop-filter: grayscale(60%) blur(5px);
+    width: 100vw;
+    height: 100vh;
+    background-color: transparent;
+}
+
+#mainContainer {
+  align-items: center;
+  gap: 2rem;
+  padding: 0 2rem;
+  min-height: 100vh;
+  max-width: 900px;
+  margin: 0 auto;
+  padding-top: 5rem;
+  background-image: linear-gradient(rgba(33, 33, 33, .5), rgba(33, 33, 33, .5)), 
+  url('./benjamins.jpg');
+  background-position: center top;
+  background-repeat: repeat-y;
+}
+
+#historyContainer {
+  margin-top: 8rem;
+  padding-bottom: 4rem; 
+  gap: 1rem;
+  background-color: transparent;
+}
+
+.divider {
+    height: 2rem;
+    border-radius: 16px;
+    background-color: rgba(245, 245, 245, .75);
+    display: flex;
+    font-size: 1.2rem;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5rem;
+}
+
+.tipInfo, .tipIcons, .tipIcon, b {
+    background-color: transparent;
+}
+
+.tipContainer {
+    background-color: rgba(245, 245, 245, .85);
+    display: flex;
+    border-style: solid;
+    border-width: 2px;
+    border-top-width: 8px;
+    border-radius: 8px;
+    padding: 2px .5rem 2px 1rem;
+    gap: 2rem;
+    justify-content: space-between;
+    line-height: 1.75;
+    width: 300px;
+}
+
+.banquet {
+    border-top-color: purple;
+}
+
+
+.tipInfo {
+    font-size: 1.5rem;
+}
+
+.tipIcons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 4px;
+}
+
+.tipIcon {
+    height: 2rem;
+    width: 2rem;
+}
+
+.editButton {
+    height: 1.75rem;
+    width: 1.75rem;
+}
+
+#addTipButton {
+    position: absolute;
+    font-size: 3rem;
+    font-weight: bold;
+    height: 6rem;
+    width: 6rem;
+    border-width: 3px;
+    border-style: solid;
+    border-color: green;
+    border-radius: 50%;
+}
+
+#addTipContainer {
+    z-index: 50;
+    align-items: flex-end;
+    width: 240px;
+    gap: 2rem;
+    position: absolute;
+    top: 6rem;
+    box-shadow: 0 0 12px 4px black;
+    padding: 1rem 12px;
+}
+
+#addTipForm {
+    align-items: flex-end;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.formPair {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .5rem;
+    font-size: 1.2rem;
+}
+
+#addTipTitle {
+    color: #212121;
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+    padding-left: 1rem;
+}
+
+#addTipExit {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#addTipAmount {
+    width: 60%;
+} 
+
+#addTipDate {
+    width: 90%;
+}
+
+#addTipCash {
+    appearance: none;
+    height: 1.5rem;
+    width: 1.5rem;
+    border-radius: 12px;
+    margin: 0 4px 0 0;
+}
+
+#addTipCash:checked {
+    background-image: radial-gradient(green 40%, white 50%);
+}
+
+input, select {
+    font-size: 1.2rem;
+    border-radius: 12px;
+    padding: 4px 8px;
+    border-style: solid;
+    border-width: 1px;
+    text-align: right;
+}
+
+.smallIcon {
+    height: 2rem;
+    width: 2rem;
+}
+
+#addTipAcceptButton {
+    height: 3rem;
+    width: 3rem;
+    border-radius: 50%;
+    border-style: solid;
+    border-width: 3px;
+    border-color: green;
+}
+
+#scrollToTopButton {
+    position: fixed;
+    z-index: 50;
+    background-color: #212121;
+    color: rgb(245,245,245);
+    font-size: 3rem;
+    border: none;
+    border-radius: 12px 12px 0 0;
+    bottom: 0px;
+    right: 5px;
+}
+
+#gitLogo {
+    height: 2rem;
+    width: 2rem;
+}
+#gitLogo:hover {
+    animation: logoRotation .75s;
+    animation-fill-mode: forwards;
+}
+footer {
+    position: absolute;
+    padding-top: 4rem;
+    padding-bottom: 1rem;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+}
