@@ -145,26 +145,22 @@ const closeTipWindow = () => {
   blurContainer.classList.add("hidden");
   addTipTitle.innerHTML = "NEW TIP";
   addTipAmount.value = "";
-  addTipCash.checked = false;
+  addTipHours.value = "";
   addTipAcceptButton.setAttribute("onclick", "confirmNewTip()");
 };
 
 // Grabs data entered into TipWindow to add a new tip object to tipsRecord
 // with the NewTip constructor only if amount and date entered are both valid
 const confirmNewTip = async () => {
-  let currency;
   let dateValid = validateDate(addTipDate.value);
-
-  if (addTipCash.checked) {
-    currency = "Cash";
-  } else currency = "Card";
 
   if (dateValid) {
     let tip = NewTip(
       addTipAmount.value,
       addTipDate.value,
       addTipType.value,
-      currency
+      "Card",
+      addTipHours.value
     );
     await storeTip(tip);
     tipsRecord.push(tip);
@@ -175,22 +171,18 @@ const confirmNewTip = async () => {
 };
 
 const confirmEditTip = (key) => {
-  let currency;
   let dateValid = validateDate(addTipDate.value);
 
   let tipIndex = tipsRecord.findIndex((tip) => tip.key === key);
   let tip = tipsRecord[tipIndex];
-
-  if (addTipCash.checked) {
-    currency = "Cash";
-  } else currency = "Card";
 
   if (dateValid) {
     localStorage.removeItem(key);
     tip.amount = addTipAmount.value;
     tip.date = addTipDate.value;
     tip.type = addTipType.value;
-    tip.currency = currency;
+    tip.currency = "Card";
+    tip.notes = addTipHours.value;
     
     storeTip(tip);
     displayConfirmation("TIP UPDATED");
@@ -209,9 +201,7 @@ const editTip = (editButton) => {
   addTipAmount.value = tip.amount;
   addTipDate.value = tip.date;
   addTipType.value = tip.type;
-  if (tip.currency === "Cash") {
-    addTipCash.checked = true;
-  } else addTipCash.checked = false;
+  addTipHours.value = tip.notes;
 
   addTipAcceptButton.setAttribute("onclick", `confirmEditTip("${key}")`);
 };
@@ -253,7 +243,7 @@ const appendHistory = async (tip, insertionPoint = null) => {
   let tipInfo = document.createElement("div");
   tipInfo.classList.add("tipInfo");
   let shortDate = tip.date.substring(5);
-  tipInfo.innerHTML = `<b>${shortDate}</b> <br> $${tip.amount}`;
+  tipInfo.innerHTML = `<b>${shortDate}</b> <br> $${tip.amount} | ${tip.notes}`;
 
   // Create icon buttons that go on side of every tip container
   let tipIcons = document.createElement("div");
@@ -273,10 +263,10 @@ const appendHistory = async (tip, insertionPoint = null) => {
 
 // Appends a break point between tips to indicate a new pay period
 // pay periods are 1-15 and 15-end of month
-const appendDivider = async (tipTotal, numberOfTips) => {
+const appendDivider = async (tipTotal, hoursTotal, numberOfTips) => {
   let average = Math.round(tipTotal / numberOfTips);
   let divider = document.createElement("div");
-  divider.innerHTML = `$${tipTotal} total | $${average} average`;
+  divider.innerHTML = `$${tipTotal} total | $${average} average <br> ${hoursTotal} hours`;
   divider.classList.add("divider");
   historyContainer.insertBefore(divider, null);
 };
@@ -299,7 +289,8 @@ const expandTip = (expandButton) => {
   expandButton.classList.add("collapseButton");
 
   day = dayOfWeek(tip.date);
-  tipInfo.innerHTML = `<b>${tip.date}</b> ${day} <br> $${tip.amount} <br> ${tip.currency} | ${tip.type}`;
+  tipInfo.innerHTML = `<b>${tip.date}</b> ${day} <br> $${tip.amount} <br> ${tip.type} | ${tip.notes}`;
+  if(tip.notes) tipInfo.innerHTML += ' hrs';
 
   let editButton = document.createElement("img");
   editButton.setAttribute("class", "tipIcon editButton");
@@ -331,7 +322,7 @@ const collapseTip = (collapseButton) => {
   collapseButton.setAttribute("onclick", "expandTip(this)");
 
   let shortDate = tip.date.substring(5);
-  tipInfo.innerHTML = `<b>${shortDate}</b> <br> $${tip.amount}`;
+  tipInfo.innerHTML = `<b>${shortDate}</b> <br> $${tip.amount} | ${tip.notes}`;
 
   deleteButton.remove();
   editButton.remove();
@@ -485,7 +476,7 @@ const addTipAcceptButton = document.getElementById("addTipAcceptButton");
 const addTipAmount = document.getElementById("addTipAmount");
 const addTipDate = document.getElementById("addTipDate");
 const addTipType = document.getElementById("addTipType");
-const addTipCash = document.getElementById("addTipCash");
+const addTipHours = document.getElementById("addTipHours");
 
 const todayDate = new Date();
 const todayDay = todayDate.getDay();
@@ -519,6 +510,7 @@ const displayHistory = async () => {
   } else secondPeriod = true;
 
   let tipTotal = 0;
+  let hoursTotal = 0;
   let numberOfTips = 0;
 
   for (i in tipsRecord) {
@@ -526,21 +518,24 @@ const displayHistory = async () => {
     let day = Number(tip.date.substring(8));
 
     if (firstPeriod && day > 15) {
-      appendDivider(tipTotal, numberOfTips);
+      appendDivider(tipTotal, hoursTotal, numberOfTips);
       firstPeriod = false;
       secondPeriod = true;
       tipTotal = 0;
       numberOfTips = 0;
+      hoursTotal = 0;
     }
     if (secondPeriod && day <= 15) {
-      appendDivider(tipTotal, numberOfTips);
+      appendDivider(tipTotal, hoursTotal, numberOfTips);
       secondPeriod = false;
       firstPeriod = true;
       tipTotal = 0;
       numberOfTips = 0;
+      hoursTotal = 0;
     }
 
     tipTotal += Number(tip.amount);
+    hoursTotal += Number(tip.notes);
     numberOfTips++;
     appendHistory(tip);
   }

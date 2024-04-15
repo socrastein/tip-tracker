@@ -111,7 +111,7 @@ body {
 }
 
 .divider {
-    height: 2rem;
+    padding: .5rem 0;
     border-radius: 16px;
     background-color: rgba(245, 245, 245, .75);
     display: flex;
@@ -218,7 +218,8 @@ body {
     justify-content: space-between;
 }
 
-#addTipAmount {
+#addTipAmount,
+#addTipHours {
     width: 60%;
 } 
 
