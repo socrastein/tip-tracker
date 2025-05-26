@@ -415,6 +415,31 @@ const deleteTip = async (deleteButton) => {
   } else return;
 };
 
+// Tips are saved as amount.date.tip.currency.notes, so this checks for a valid date entry
+function isTipDataValid(tipData) {
+
+  const dataArray = tipData.split(".");
+  const dateString = dataArray[1];
+  if (dateString === undefined) {
+    return false;
+  }
+
+  // Multiple tips for the same day have 2/3/etc. appended to the date
+  // This removes the extra digit so just the date can be evaluated
+  const dateSpaceIndex = dateString.indexOf(' ');
+  if (dateSpaceIndex > 0) {
+    dateString = dateString.slice(0, dateSpaceIndex);
+  }
+
+  const date = new Date(dateString);
+
+  if (date.toString() === "Invalid Date" || date === undefined) {
+    return false;
+  } else {
+    return true;
+  }
+};
+
 // Grabs all the values from localStorage which take the form 246.2021-06-30.Banquet.false
 // tip.date.type.currency.notes
 const loadTipFromStorage = (key) => {
@@ -437,11 +462,12 @@ const loadAllFromStorage = async () => {
 
   for (let i = 0; i < localStorage.length; i++) {
     let storedTip = localStorage.getItem(localStorage.key(i));
+
     // Check that stored data is part of tip app 
-    if(!isTipDataValid(storedTip)){
-      return;
+    if (!isTipDataValid(storedTip)) {
+      continue;
     }
-    
+
     let splitTip = storedTip.split(".");
     let tip = NewTip(
       splitTip[0], //amount
@@ -455,17 +481,7 @@ const loadAllFromStorage = async () => {
   }
 };
 
-// Tips are saved as amount.date.tip.currency.notes, so this checks for a valid date entry
-function isTipDataValid(tipData) {
-  const dataArray = tipData.split(".");
-  const date = new Date(dataArray[1]);
 
-  if (date.toString() === "Invalid Date" || date === undefined) {
-    return false;
-  } else {
-    return true;
-  }
-};
 
 ////////////////////////
 // ELEMENT VARIABLES //
