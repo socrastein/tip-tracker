@@ -66,7 +66,7 @@ const displayError = (message) => {
   if (message) {
     systemMessage.classList.remove("fadeOut");
     systemMessage.style.color = "red";
-    systemMessage.style.backgroundColor = "rgba(33,33,33,.75)"
+    systemMessage.style.backgroundColor = "rgba(33,33,33,.75)";
     systemMessage.innerHTML = message;
     setTimeout(displayFade, 3000);
   } else {
@@ -78,7 +78,7 @@ const displayConfirmation = (message) => {
   if (message) {
     systemMessage.classList.remove("fadeOut");
     systemMessage.style.color = "green";
-    systemMessage.style.backgroundColor = "rgba(33,33,33,.75)"
+    systemMessage.style.backgroundColor = "rgba(33,33,33,.75)";
     systemMessage.innerHTML = message;
     setTimeout(displayFade, 2000);
   } else {
@@ -183,7 +183,7 @@ const confirmEditTip = (key) => {
     tip.type = addTipType.value;
     tip.currency = "Card";
     tip.notes = addTipHours.value;
-    
+
     storeTip(tip);
     displayConfirmation("TIP UPDATED");
     closeTipWindow();
@@ -290,7 +290,7 @@ const expandTip = (expandButton) => {
 
   day = dayOfWeek(tip.date);
   tipInfo.innerHTML = `<b>${tip.date}</b> ${day} <br> $${tip.amount} <br> ${tip.type} | ${tip.notes}`;
-  if(tip.notes) tipInfo.innerHTML += ' hrs';
+  if (tip.notes) tipInfo.innerHTML += ' hrs';
 
   let editButton = document.createElement("img");
   editButton.setAttribute("class", "tipIcon editButton");
@@ -434,8 +434,14 @@ const loadTipFromStorage = (key) => {
 // Use localStorage.getItem(localStorage.key(i)) to get the value of each item
 // Amount.date.type.currency.notes e.g. '121.2021-11-04.Banquet.Card.Double: Lunch'
 const loadAllFromStorage = async () => {
+
   for (let i = 0; i < localStorage.length; i++) {
     let storedTip = localStorage.getItem(localStorage.key(i));
+    // Check that stored data is part of tip app 
+    if(!isTipDataValid(storedTip)){
+      return;
+    }
+    
     let splitTip = storedTip.split(".");
     let tip = NewTip(
       splitTip[0], //amount
@@ -446,6 +452,18 @@ const loadAllFromStorage = async () => {
       localStorage.key(i)
     );
     tipsRecord.push(tip);
+  }
+};
+
+// Tips are saved as amount.date.tip.currency.notes, so this checks for a valid date entry
+function isTipDataValid(tipData) {
+  const dataArray = tipData.split(".");
+  const date = new Date(dataArray[1]);
+
+  if (date.toString() === "Invalid Date" || date === undefined) {
+    return false;
+  } else {
+    return true;
   }
 };
 
