@@ -5,7 +5,7 @@ import { onMounted } from "vue";
 import NavBarButton from "./NavBarButton.vue";
 
 import menuIcon from "@/assets/icons/menu.svg";
-import closeIcon from "@/assets/icons/close.svg";
+import closeIcon from "@/assets/icons/x.svg";
 
 // Define your props
 defineProps({
