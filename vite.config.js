@@ -19,12 +19,14 @@ export default defineConfig({
       }
     }
   })],
+  base: '/tip-tracker/',
   define: {
     // Enable more detailed Vue debugging
     __VUE_PROD_DEVTOOLS__: true,
     __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: true
   },
   build: {
+    outDir: 'docs',
     sourcemap: true,
   },
   css: {
