@@ -129,72 +129,35 @@ export const TipMemory = {
     );
     if (!group) {
       group = reactive({ period: key, tips: [], total: 0 });
-      
+
       // See if there's a group with a period later than current group
       const index = this.tipState.groupedTips.findIndex(
         (group: any) => group.period > key
       );
 
-      console.log("Insert index found:", index);
-      console.log("Will insert at position:", index === -1 ? "end" : index);
-
       // If none found, group represents most recent period so push to end of array
       if (index === -1) {
-        this.tipState.groupedTips.push(group);
+        this.tipState.groupedTips.unshift(group);
         // Place group into array just before first group period that's later than it
       } else {
         this.tipState.groupedTips.splice(index, 0, group);
       }
     }
 
-    console.log("=== GROUP INSERTION DEBUG ===");
-    console.log("New tip date:", newTip.date);
-    console.log("Group key for new tip:", key);
-    console.log(
-      "All existing group periods:",
-      this.tipState.groupedTips.map((g) => g.period)
-    );
-
-    console.log(
-      "Group periods after insertion:",
-      this.tipState.groupedTips.map((g) => g.period)
-    );
-
     {
-      // Insert tip into group's tips sorted by date using same logic as above
-      console.log("Adding tip with date:", newTip.date);
-      console.log(
-        "Existing tips in group:",
-        group.tips.map((t) => t.date)
-      );
-
-      group.tips.sort((a, b) => b.date.localeCompare(a.date));
-      console.log(
-        "Existing tips in group (after sort):",
-        group.tips.map((t) => t.date)
-      );
-
       const tipIndex = group.tips.findIndex(
         (tip: Tip) => tip.date < newTip.date
       );
-
-      console.log("Insert index found:", tipIndex);
 
       const newTipsArray = [...group.tips]; // Instead of splicing
 
       if (tipIndex === -1) {
         newTipsArray.push(newTip);
-        console.log("Added to end");
       } else {
         newTipsArray.splice(tipIndex, 0, newTip);
-        console.log("Inserted at index", tipIndex);
       }
       group.tips = newTipsArray;
 
-      console.log(
-        "Group tips after insert:",
-        group.tips.map((t) => t.date)
-      );
       group.total += newTip.amount;
       newTip.saveToLocalStorage();
     }
