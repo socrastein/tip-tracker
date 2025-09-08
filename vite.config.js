@@ -2,34 +2,32 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [vue({
     include: [/\.vue$/],
     script: {
-      // Add more detailed source mapping
       defineModel: true,
       propsDestructure: true
     },
-    // Better error reporting
     template: {
       compilerOptions: {
         whitespace: 'preserve'
       }
     }
   })],
-  base: '/tip-tracker/',
+  // Only use base path for production builds
+  base: mode === 'production' ? '/tip-tracker/' : '/',
   define: {
-    // Enable more detailed Vue debugging
-    __VUE_PROD_DEVTOOLS__: process.env.NODE_ENV === 'development',
+    __VUE_PROD_DEVTOOLS__: mode === 'development',
     __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: true,
-    'process.env.NODE_ENV': JSON.stringify('production')
+    'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : 'development')
   },
   build: {
     outDir: 'docs',
-    sourcemap: true,
+    sourcemap: mode === 'development',
   },
   css: {
-    devSourcemap: true,
+    devSourcemap: mode === 'development',
   },
   server: {
     sourcemapIgnoreList: false,
@@ -40,6 +38,6 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src')
     }
   }
-})
+}))
 
 

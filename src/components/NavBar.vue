@@ -29,7 +29,10 @@ function toggleBackgroundBlur() {
 
 function removeBackgroundBlur() {
   const mainContainer = document.getElementById("mainContainer");
-  mainContainer.classList.remove("blurEffectOnMenu");
+  // Add null check
+  if (mainContainer) {
+    mainContainer.classList.remove("blurEffectOnMenu");
+  }
 }
 </script>
 
