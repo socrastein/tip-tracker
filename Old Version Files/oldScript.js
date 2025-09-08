@@ -377,6 +377,11 @@ const storageAvailable = (type) => {
 
 console.log(`localStorage availability: ` + storageAvailable("localStorage"));
 
+// OLD LOCAL STORAGE STYLE:
+// Key: 2025-02-07
+// Value: 242.2025-02-07.Banquet.Card.8
+// Value: Amount.Date.Type.Payment.Notes(Used for hours)
+
 // Takes tip object and adds it to localStorage at specified key
 const storeTip = async (tip) => {
   let key = tip.date;

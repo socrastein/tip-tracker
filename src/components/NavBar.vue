@@ -1,57 +1,68 @@
 <script setup>
-import { ref, computed } from "vue";
-import { onMounted } from "vue";
-
-import NavBarButton from "./NavBarButton.vue";
-
-import menuIcon from "@/assets/icons/menu.svg";
-import closeIcon from "@/assets/icons/x.svg";
-
-// Define your props
-defineProps({
-  // Add your props here
-});
+import { ref } from "vue";
+import { OnClickOutside } from "@vueuse/components";
+import NavBarMenuButton from "./NavBarMenuButton.vue";
+import NavBarMenu from "./NavBarMenu.vue";
 
 // Define your component's data
-const isIconA = ref(true);
-const iconA = ref(menuIcon); // Example icon name
-const iconB = ref(closeIcon); // Example icon name
+const isMenuOpen = ref(false);
 
-// Define your methods
-
-function toggleIcon() {
-  isIconA.value = !isIconA.value;
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-// Lifecycle hook
-onMounted(() => {
-  // Add your mounted logic here
-});
+function toggleMenu() {
+  isMenuOpen.value = !isMenuOpen.value;
+  toggleBackgroundBlur();
+}
+
+// Close menu when clicking outside
+function close() {
+  isMenuOpen.value = false;
+  removeBackgroundBlur();
+}
+
+function toggleBackgroundBlur() {
+  const mainContainer = document.getElementById("mainContainer");
+  mainContainer.classList.toggle("blurEffectOnMenu");
+}
+
+function removeBackgroundBlur() {
+  const mainContainer = document.getElementById("mainContainer");
+  mainContainer.classList.remove("blurEffectOnMenu");
+}
 </script>
 
 <template>
   <div class="navBar">
-    <h2>Tip Tracker</h2>
-    <NavBarButton
-      :icon="isIconA ? iconA : iconB"
-      @click="
-        () => {
-          isIconA ? $router.push('/menu') : $router.push('/');
-          toggleIcon();
-        }
-      "
-    />
+    <h2 class="appTitle" @click="() => scrollToTop()">💲 Tip Tracker</h2>
+
+    <OnClickOutside @trigger="close">
+      <NavBarMenuButton :isOpen="isMenuOpen" @toggle="toggleMenu" />
+      <NavBarMenu v-if="isMenuOpen" />
+    </OnClickOutside>
   </div>
 </template>
 
 <style scoped>
 /* Add your component-specific styles here */
 .navBar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  margin: auto;
+  height: 60px;
+  z-index: 50;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
   padding: 10px 3%;
-  background-color: var(--backgroundDark);
+  background-color: var(--backgroundBlack);
+}
+
+.appTitle:hover {
+  cursor: pointer;
 }
 </style>

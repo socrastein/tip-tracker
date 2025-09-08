@@ -2,29 +2,17 @@
 import { ref, computed } from 'vue';
 import { onMounted } from 'vue';
 
-defineProps({
 
-});
-
-const someData = ref(null); 
-
-const someComputed = computed(() => {
-
-});
-
-onMounted(() => {
-
-});
 </script>
 
 <template>
   <div class="className">
-
+    <!-- Your component template goes here -->
   </div>
 </template>
 
 <style scoped>
-
+/* Add your component-specific styles here */
 .className {
 }
 </style>

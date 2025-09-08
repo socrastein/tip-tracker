@@ -16,9 +16,10 @@
 
 /* Root Variables */
 :root {
-  --themeColor: #3498db;
+  --themeColor: #378e3c;
   --backgroundLight: #242424;
   --backgroundDark: #1a1a1a;
+  --backgroundBlack: #0e1113;
   --font: #fafafa;
   --backgroundImage: url("/src/assets/photos/sparklingWine.jpg");
 }
@@ -29,6 +30,10 @@ body {
   background-size: cover;
   background-position: top center;
   background-repeat: no-repeat;
+  background-attachment: fixed;
+
+  padding-top: 60px;
+  padding-bottom: 2rem;
 }
 
 /* Basic CSS Reset */
@@ -37,6 +42,9 @@ body {
   padding: 0;
   box-sizing: border-box;
   color: var(--font);
+
+  transition: background-color 0.3s ease, color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 html,
@@ -76,6 +84,11 @@ ol {
   list-style: none;
 }
 
+hr {
+  width: 100%;
+  color: var(--themeColor);
+}
+
 /* Remove incremenet arrows on number inputs */
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
@@ -85,6 +98,10 @@ input::-webkit-inner-spin-button {
 }
 
 /* Firefox */
-input[type=number] {
+input[type="number"] {
   -moz-appearance: textfield;
+}
+
+button {
+  border: none;
 }
