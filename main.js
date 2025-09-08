@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 
 import { TipMemory } from './src/scripts/TipMemory';
 import { setThemeColorFromLocalStorage } from './src/scripts/ColorTheme';
-import { stringifiedBackup } from './src/scripts/BackupTips';
+
 
 import "./style.css";
 import "./polish.css";
@@ -15,8 +15,6 @@ import Home from '/src/pages/Home.vue';
 import Stats from '/src/pages/Stats.vue';
 
 setThemeColorFromLocalStorage();
-
-// TipMemory.saveJSONBackupToStorage(stringifiedBackup);
 
 // Check for tipTracker(version 1.0) key in local storage,
 // indicating that storage has already been scanned for legacy tips
@@ -41,7 +39,7 @@ const routes = [
 
 // Create the router instance
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHistory(import.meta.env.BASE_URL),
     routes,
 });
 
