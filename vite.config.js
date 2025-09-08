@@ -4,7 +4,6 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [vue({
-    // Include filename in compiled output for better debugging
     include: [/\.vue$/],
     script: {
       // Add more detailed source mapping
@@ -14,7 +13,6 @@ export default defineConfig({
     // Better error reporting
     template: {
       compilerOptions: {
-        // Preserve whitespace can help with line mapping
         whitespace: 'preserve'
       }
     }
@@ -22,8 +20,9 @@ export default defineConfig({
   base: '/tip-tracker/',
   define: {
     // Enable more detailed Vue debugging
-    __VUE_PROD_DEVTOOLS__: true,
-    __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: true
+    __VUE_PROD_DEVTOOLS__: process.env.NODE_ENV === 'development',
+    __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: true,
+    'process.env.NODE_ENV': JSON.stringify('production')
   },
   build: {
     outDir: 'docs',
