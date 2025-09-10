@@ -1,8 +1,10 @@
 import { Tip } from "./ClassTip";
-import { TipMemory } from "./TipMemory";
+import {TipStore} from "./TipStore"
 import { getYearMonthDayString, daysAgo } from "./Dates";
 
 export function generateMockTips(numberOfTips: number) {
+  const mockTips = [] as Tip[];
+
   const startDate = daysAgo(numberOfTips + Math.floor(numberOfTips / 2));
   const endDate = new Date(new Date().toLocaleString());
 
@@ -10,22 +12,21 @@ export function generateMockTips(numberOfTips: number) {
   const endTimestamp = endDate.getTime();
 
   for (let i = 0; i < numberOfTips; i++) {
-    let amount = getRandomAmount(125, 500);
+    let amount = getRandomAmount(50, 400);
     let date = getRandomDate(startTimestamp, endTimestamp);
     let type = getRandomType();
     let shift = getRandomShift();
 
     // Generate new date if a tip already exists with that date
-    while (TipMemory.allTips.find((tip) => tip.date === date) !== undefined) {
+    while (mockTips.find((tip) => tip.date === date) !== undefined) {
       date = getRandomDate(startTimestamp, endTimestamp);
     }
 
     const tip = new Tip(amount, date, type, shift);
 
-    TipMemory.loadTipObject(tip);
+    mockTips.push(tip);
   }
-  console.log(`${numberOfTips} mock tips created`);
-  console.log(TipMemory.getLengthOfAllTips() + " tips loaded into memory.");
+  return mockTips;
 }
 
 //
@@ -48,5 +49,3 @@ function getRandomShift() {
   let randInt = Math.random();
   return randInt > 0.1 ? "Dinner" : "Lunch";
 }
-
-
