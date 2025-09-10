@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from "vue";
 
+import { TipGrouper } from "../scripts/TipGrouper";
+
 // Define your props
 const props = defineProps({
   period: String,
@@ -11,7 +13,7 @@ const props = defineProps({
 // Define your computed properties
 
 const average = computed(() => {
-  return Math.floor(props.total / props.tips.length);
+  return TipGrouper.calculateGroupAverage(props.tips);
 });
 
 const periodLabel = computed(() => {
