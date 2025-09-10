@@ -70,6 +70,10 @@ export class Tip {
     this._validateShift(shift);
     this._shift = shift;
   }
+
+  get prefix() {
+    return Tip._prefix;
+  }
   // _endregion
 
   // _region Property validation methods
