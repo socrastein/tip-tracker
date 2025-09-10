@@ -12,8 +12,13 @@ export const TipRepository = {
 
   saveAllToStorage: function (tips: Tip[]) {
     tips.forEach((tip: Tip) => {
-      this.save(tip);
+      this.saveToStorage(tip);
     });
+  },
+
+  isValidTipKey: function (key: string): boolean {
+    const prefix = Tip._prefix;
+    return key.includes(prefix);
   },
 
   loadFromStorage: function (key: string) {
@@ -24,6 +29,10 @@ export const TipRepository = {
 
     const splitKey = key.split(".");
     const splitValue = value.split(".");
+
+    if (splitKey.length !== 3 || splitValue.length !== 2) {
+      throw new Error(`Invalid tip data format for key: ${key}`);
+    }
 
     const amount = parseInt(splitValue[0]);
     const date = splitKey[1];
@@ -43,8 +52,8 @@ export const TipRepository = {
       const key = localStorage.key(i);
       if (key === null) continue;
       // Check for prefix used for key generation in Tip class
-      if (key.includes("tipTracker(storedTip)")) {
-        const tip = this.load(key);
+      if (this.isValidTipKey(key)) {
+        const tip = this.loadFromStorage(key);
         tips.push(tip);
       } else continue;
     }
@@ -56,5 +65,9 @@ export const TipRepository = {
     tip.deleteFromLocalStorage();
   },
 
-  downloadTipsToJSON: function (tips: Tip[]) {},
+  exportTipsToJSON: function (tips: Tip[]) {},
+
+  importTipsFromJSON: function (jsonString: string) {},
+
+  downloadJSONFile(tips: Tip[], filename?: string) {},
 };
