@@ -13,6 +13,14 @@ export const TipStore = {
     groupedTips: [],
   }),
 
+  getLengthOfAllTips: function () {
+    return this._tipState.allTips.length;
+  },
+
+  getLengthOfGroupedTips: function () {
+    return this._tipState.groupedTips.length;
+  },
+
   findGroupByKey: function (key: string) {
     let group = this._tipState.groupedTips.find(
       (group: any) => group.period === key
