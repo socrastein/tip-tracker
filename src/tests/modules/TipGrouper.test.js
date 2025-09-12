@@ -167,7 +167,7 @@ describe('TipGrouper', () => {
       expect(tips[2].date).toBe('2024-01-01');
     });
 
-    it('should handle tips with same date', () => {
+    it('should put lunch before dinner if dates are the same', () => {
       const tips = [
         new Tip(100, '2024-01-01', 'Floor', 'Lunch'),
         new Tip(200, '2024-01-01', 'Banquet', 'Dinner'),
@@ -179,6 +179,11 @@ describe('TipGrouper', () => {
       expect(tips[0].date).toBe('2024-01-02');
       expect(tips[1].date).toBe('2024-01-01');
       expect(tips[2].date).toBe('2024-01-01');
+
+      expect(tips[0].shift).toBe('Lunch');
+      expect(tips[1].shift).toBe('Dinner');
+      expect(tips[2].shift).toBe('Lunch');
+      
     });
 
     it('should handle empty array', () => {
