@@ -49,6 +49,10 @@ export const TipGrouper = {
       let date1 = Number(a.date.replaceAll("-", ""));
       let date2 = Number(b.date.replaceAll("-", ""));
 
+      if (date1 === date2) {
+        // Place Dinner shift later than Lunch if dates are the same
+        return a.shift === "Dinner" ? -1 : 1;
+      }
       return date2 - date1;
     });
   },
