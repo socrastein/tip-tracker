@@ -1,6 +1,5 @@
 <script setup>
 import { computed } from "vue";
-
 import { TipGrouper } from "../scripts/TipGrouper";
 
 // Define your props

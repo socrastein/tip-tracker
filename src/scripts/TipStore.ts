@@ -13,12 +13,54 @@ export const TipStore = {
     groupedTips: [],
   }),
 
+  setAllTips: function (tips: Tip[]) {
+    this._tipState.allTips.splice(0, this._tipState.allTips.length, ...tips);
+  },
+
+  setGroupedTips: function (groups: []) {
+    this._tipState.groupedTips.splice(
+      0,
+      this._tipState.groupedTips.length,
+      ...groups
+    );
+  },
+
+  getAllTips: function () {
+    return this._tipState.allTips;
+  },
+
+  getGroupedTips: function () {
+    return this._tipState.groupedTips;
+  },
+
   getLengthOfAllTips: function () {
     return this._tipState.allTips.length;
   },
 
   getLengthOfGroupedTips: function () {
     return this._tipState.groupedTips.length;
+  },
+
+  logAllTipsToConsole: function (limit?: number) {
+    let length = limit;
+    if (!length) length = this._tipState.allTips.length;
+    console.log(length);
+
+    console.log(`Logging ${length} tips from allTips:`);
+    for (let i = 0; i < length; i++) {
+      console.log(this._tipState.allTips[i]);
+    }
+  },
+
+  logGroupedTipsToConsole: function (limit?: number) {
+    let length = limit;
+    if (!length) length = this._tipState.groupedTips.length;
+    console.log(length);
+
+    console.log(`Logging ${length} groups from groupedTips:`);
+    for (let i = 0; i < length; i++) {
+      console.log(this._tipState.groupedTips[i]);
+    }
   },
 
   findGroupByKey: function (key: string) {
@@ -75,7 +117,7 @@ export const TipStore = {
     let group = this.findGroupByKey(key);
 
     if (!group) {
-      group = TipGrouper.createEmptyGroup;
+      group = TipGrouper.createEmptyGroup(key);
       this.insertGroupInOrder(group);
     }
 
@@ -120,18 +162,6 @@ export const TipStore = {
       this._tipState.allTips.find(
         (tip: Tip) => tip.date === date && tip.shift === shift
       ) || null
-    );
-  },
-
-  setAllTips: function (tips: Tip[]) {
-    this._tipState.allTips.splice(0, this._tipState.allTips.length, ...tips);
-  },
-
-  setGroupedTips: function (groups: []) {
-    this._tipState.groupedTips.splice(
-      0,
-      this._tipState.groupedTips.length,
-      ...groups
     );
   },
 };

@@ -44,6 +44,15 @@ export const TipGrouper = {
     return Math.floor(total / groupTips.length);
   },
 
+  sortAllTipsByDate: function (tips: Tip[]) {
+    tips.sort(function (a: Tip, b: Tip) {
+      let date1 = Number(a.date.replaceAll("-", ""));
+      let date2 = Number(b.date.replaceAll("-", ""));
+
+      return date2 - date1;
+    });
+  },
+
   // Generic grouping function that takes a function for
   // creating group keys from tip objects.
   groupBy: function (tips: Tip[], keyExtractor: (tip: Tip) => string) {

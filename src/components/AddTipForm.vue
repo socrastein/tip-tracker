@@ -4,7 +4,7 @@ import { useFocus } from "@vueuse/core";
 
 import { Tip } from "../scripts/ClassTip";
 import { getYearMonthDayString } from "../scripts/Dates";
-import { TipMemory } from "../scripts/TipMemory";
+import { TipStore } from "../scripts/TipStore";
 
 import ErrorMessage from "./ErrorMessage.vue";
 import ConfirmationMessage from "./ConfirmationMessage.vue";
@@ -56,7 +56,7 @@ function isFormInputValid(targetTip) {
     return false;
   }
 
-  const duplicate = TipMemory.checkForDuplicateTip(
+  const duplicate = TipStore.checkForDuplicateTip(
     inputDate.value,
     inputShift.value
   );
@@ -87,7 +87,7 @@ function confirmNewTip() {
         inputShift.value
       )
     );
-    TipMemory.addNewTip(newTip);
+    TipStore.addTip(newTip);
     emit("close");
   } catch (error) {
     console.log(error);
@@ -102,7 +102,7 @@ function confirmEditTip() {
   }
 
   try {
-    TipMemory.editTip(props.targetTip, {
+    TipStore.editTip(props.targetTip, {
       amount: inputAmount.value,
       date: inputDate.value,
       type: inputType.value,
@@ -222,7 +222,7 @@ watch(
         :message="confirmMessage"
         @confirm="
           () => {
-            TipMemory.removeTip(targetTip);
+            TipStore.removeTip(targetTip);
             $emit('close');
           }
         "

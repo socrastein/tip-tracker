@@ -1,35 +1,31 @@
 import { createApp } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
 
-import { TipMemory } from './src/scripts/TipMemory';
-import { setThemeColorFromLocalStorage } from './src/scripts/ColorTheme';
-
-
-import "./style.css";
-import "./polish.css";
-
 import App from '/src/components/App.vue';
 
 // Import components for the routes
 import Home from '/src/pages/Home.vue';
 import Stats from '/src/pages/Stats.vue';
 
+import { TipRepository } from './src/scripts/TipRepository';
+import { TipStore } from './src/scripts/TipStore';
+import { TipGrouper } from './src/scripts/TipGrouper';
+
+import "./style.css";
+import "./polish.css";
+
+import { setThemeColorFromLocalStorage } from './src/scripts/ColorTheme';
+import { TipAnalyzer } from './src/scripts/TipAnalyzer';
 setThemeColorFromLocalStorage();
 
-// Check for tipTracker(version 1.0) key in local storage,
-// indicating that storage has already been scanned for legacy tips
-// and upgraded to the latest format
+// Load tips from localStorage, sort by date, then load into allTips
+const loadedTips = TipRepository.loadAllFromStorage();
+TipGrouper.sortAllTipsByDate(loadedTips);
+TipStore.setAllTips(loadedTips);
 
-const upgradeNeeded = TipMemory.isUpgradeNeeded();
-if (upgradeNeeded) {
-    TipMemory.upgradeToLatest();
-} else {
-    TipMemory.loadAllTipsFromStorage();
-}
-
-// TipMemory.logAllTipsToConsole();
-TipMemory.sortAllTipsByDate();
-TipMemory.initializeGroups();
+// Group allTips into pay periods for groupedTips
+const groupedTips = TipGrouper.groupByPeriod(loadedTips);
+TipStore.setGroupedTips(groupedTips);
 
 // Define routes
 const routes = [

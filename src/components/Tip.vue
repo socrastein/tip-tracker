@@ -6,7 +6,7 @@ import state from "../scripts/EventBus";
 import editIcon from "../assets/icons/edit.svg";
 
 import Date from "./Date.vue";
-import { TipMemory } from "../scripts/TipMemory";
+import { TipStore } from "../scripts/TipStore";
 
 const showEdit = ref(false);
 const outsideTarget = ref(null);
@@ -20,7 +20,7 @@ function handleRighClick() {
 }
 
 function handleEditClick() {
-  const tipObj = TipMemory.retrieveTipDataFromMemory(props.date, props.shift);
+  const tipObj = TipStore.checkForDuplicateTip(props.date, props.shift);
 
   state.tipObject = tipObj;
   state.isBeingEdited = true;

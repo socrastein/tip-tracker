@@ -1,6 +1,7 @@
 {
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.4",
+    "jsdom": "^26.1.0",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.2",
     "vite": "^6.3.5",

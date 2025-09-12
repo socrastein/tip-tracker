@@ -22,6 +22,9 @@ export const TipRepository = {
   },
 
   loadFromStorage: function (key: string) {
+    if (!this.isValidTipKey(key)) {
+      throw new Error("Attempted to load item without proper key prefix");
+    }
     const value = localStorage.getItem(key);
     if (value === null) {
       throw new Error(`Tip key '${key}' has no stored value`);

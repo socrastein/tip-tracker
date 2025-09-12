@@ -74,6 +74,14 @@ export class Tip {
   get prefix() {
     return Tip._prefix;
   }
+
+  get storageKey() {
+    return `${Tip._prefix}.${this._date}.${this._shift}`;
+  }
+
+  get storageValue() {
+    return `${this._amount}.${this._type}`;
+  }
   // _endregion
 
   // _region Property validation methods
@@ -120,14 +128,14 @@ export class Tip {
     // Example key and value:
     // tipTracker(Stored Tip).2025-08-29.Dinner
     // 350.Banquet
-    let key = `${Tip._prefix}.${this._date}.${this._shift}`;
-    let value = `${this._amount}.${this._type}`;
+    let key = this.storageKey;
+    let value = this.storageValue;
 
-    localStorage[key] = value;
+    localStorage.setItem(key, value);
   }
 
   deleteFromLocalStorage() {
-    let key = `${Tip._prefix}.${this._date}.${this._shift}`;
+    let key = this.storageKey;
     localStorage.removeItem(key);
   }
 }

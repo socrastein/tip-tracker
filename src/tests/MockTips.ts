@@ -1,6 +1,14 @@
-import { Tip } from "./ClassTip";
-import {TipStore} from "./TipStore"
-import { getYearMonthDayString, daysAgo } from "./Dates";
+import { Tip } from "../scripts/ClassTip";
+import { getYearMonthDayString, daysAgo } from "../scripts/Dates";
+
+export function mockTip(
+  amount: number,
+  date = "2025-09-10",
+  type = "Banquet",
+  shift = "Dinner"
+) {
+  return new Tip(amount, date, type, shift);
+}
 
 export function generateMockTips(numberOfTips: number) {
   const mockTips = [] as Tip[];

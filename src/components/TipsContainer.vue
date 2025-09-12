@@ -1,11 +1,11 @@
 <script setup>
 import { computed } from "vue";
-import { TipMemory } from "../scripts/TipMemory";
 import Tip from "../components/Tip.vue";
 import PayPeriodSummary from "../components/PayPeriodSummary.vue";
+import { TipStore } from "../scripts/TipStore";
 
 // Reactive array
-const groupedTips = computed(() => TipMemory.tipState.groupedTips);
+const groupedTips = computed(() => TipStore.getGroupedTips());
 </script>
 
 <template>

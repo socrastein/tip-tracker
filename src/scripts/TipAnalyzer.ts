@@ -7,6 +7,9 @@ export const TipAnalyzer = {
 
   getLargestTip: function (tips: Tip[]) {
     let highest = tips[0];
+    if (!highest) {
+      throw new Error("Tip array is empty");
+    }
 
     tips.forEach((tip: Tip) => {
       if (tip.amount > highest.amount) {
@@ -19,6 +22,9 @@ export const TipAnalyzer = {
 
   getLowestTip: function (tips: Tip[]) {
     let lowest = tips[0];
+    if (!lowest) {
+      throw new Error("Tip array is empty");
+    }
 
     tips.forEach((tip: Tip) => {
       if (tip.amount < lowest.amount) {

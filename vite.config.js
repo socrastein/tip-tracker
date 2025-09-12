@@ -36,8 +36,13 @@ export default defineConfig(({ mode }) => ({
     alias: {
       src: "/src",
       '@': path.resolve(__dirname, 'src')
-    }
-  }
+    },
+  },
+  test: {
+    setupFiles: './src/tests/setupTests.ts', // or .js, whichever you make
+    environment: 'jsdom', // ensures window + localStorage exist
+  },
+
 }))
 
 
