@@ -42,8 +42,7 @@ export const TipStore = {
   },
 
   logAllTipsToConsole: function (limit?: number) {
-    let length = limit;
-    if (!length) length = this._tipState.allTips.length;
+    let length = limit ? limit : this._tipState.allTips.length;
     console.log(length);
 
     console.log(`Logging ${length} tips from allTips:`);
@@ -53,8 +52,7 @@ export const TipStore = {
   },
 
   logGroupedTipsToConsole: function (limit?: number) {
-    let length = limit;
-    if (!length) length = this._tipState.groupedTips.length;
+    let length = limit ? limit : this._tipState.allTips.length;
     console.log(length);
 
     console.log(`Logging ${length} groups from groupedTips:`);
