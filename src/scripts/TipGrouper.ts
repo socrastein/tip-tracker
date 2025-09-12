@@ -77,10 +77,12 @@ export const TipGrouper = {
   },
 
   groupByDayOfWeek: function (tips: Tip[]) {
-    return this.groupBy(
-      tips,
-      (tip: Tip) => dayNames[new Date(tip.date).getDay()]
-    );
+    return this.groupBy(tips, (tip: Tip) => {
+      // Parse the date as local time instead of UTC
+      const [year, month, day] = tip.date.split("-").map(Number);
+      const localDate = new Date(year, month - 1, day); // month is 0-indexed
+      return dayNames[localDate.getDay()];
+    });
   },
 
   groupByShift: function (tips: Tip[]) {
