@@ -7,6 +7,12 @@ import { TipRepository } from "./TipRepository";
  * Handles memory state management for tips
  */
 
+interface Group {
+  period: string;
+  tips: Tip[];
+  total: number;
+}
+
 export const TipStore = {
   _tipState: reactive({
     allTips: [],
@@ -17,7 +23,7 @@ export const TipStore = {
     this._tipState.allTips.splice(0, this._tipState.allTips.length, ...tips);
   },
 
-  setGroupedTips: function (groups: []) {
+  setGroupedTips: function (groups: Group[]) {
     this._tipState.groupedTips.splice(
       0,
       this._tipState.groupedTips.length,
@@ -77,31 +83,24 @@ export const TipStore = {
     return group;
   },
 
-  insertGroupInOrder: function (group: {
-    period: string;
-    tips: Tip[];
-    total: number;
-  }) {
+  insertGroupInOrder: function (group: Group) {
     // See if there's a group with a period later than current group
     const index = this._tipState.groupedTips.findIndex(
-      (existingGroup: any) => existingGroup.period > group.period
+      (existingGroup: any) => existingGroup.period < group.period
     );
-    // If none found, group represents most recent period so push to start of array
+    // If none found, group represents oldest period so push to end of array
     if (index === -1) {
-      this._tipState.groupedTips.unshift(group);
-      // Place group into array just before first group period that's later than it
+      this._tipState.groupedTips.push(group);
+      // Place group into array just before first group period that's earlier than it
     } else {
       this._tipState.groupedTips.splice(index, 0, group);
     }
   },
 
-  removeTipFromGroup: function (
-    tip: Tip,
-    group: { period: string; tips: Tip[]; total: number }
-  ) {
+  removeTipFromGroup: function (tip: Tip, group: Group) {
     let tipIndex = group.tips.indexOf(tip);
     if (tipIndex === -1) {
-      console.error(`Could not find ${tip} in group ${group.tips}`);
+      throw new Error(`Could not find ${tip} in group ${group.tips}`);
       return;
     }
     group.tips.splice(tipIndex, 1);
@@ -117,6 +116,18 @@ export const TipStore = {
   },
 
   addTip: function (tip: Tip) {
+    // Make sure same object reference isn't already in allTips
+    if (this._tipState.allTips.includes(tip)) {
+      throw new Error(`The tip ${tip} already exists in allTips`);
+    }
+    // Check that there isn't already a tip with the same date and shift as the one being added
+    const possibleDuplicate = this.checkForDuplicateTip(tip.date, tip.shift);
+    if (possibleDuplicate !== null) {
+      throw new Error(
+        `DUPLICATE FOUND: The tip ${tip} has same date and shift as ${possibleDuplicate}`
+      );
+    }
+
     this._tipState.allTips.push(tip);
 
     const key = TipGrouper.getGroupKey(tip.date);
@@ -138,8 +149,7 @@ export const TipStore = {
     // Find and remove from allTips
     const allTipsIndex = this._tipState.allTips.indexOf(tip);
     if (allTipsIndex === -1) {
-      console.error(`Could not find tip ${tip} in allTips`);
-      return;
+      throw new Error(`Could not find tip ${tip} in allTips`);
     }
     this._tipState.allTips.splice(allTipsIndex, 1);
 
