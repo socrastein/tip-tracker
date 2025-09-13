@@ -7,6 +7,9 @@ import { reactive } from "vue";
 
 export const TipRepository = {
   saveToStorage: function (tip: Tip) {
+    if (!(tip instanceof Tip)) {
+      throw new Error("Cannot save item that isn't a Tip");
+    }
     tip.saveToLocalStorage();
   },
 
