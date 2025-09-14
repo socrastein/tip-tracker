@@ -15,7 +15,6 @@ import "./style.css";
 import "./polish.css";
 
 import { setThemeColorFromLocalStorage } from './src/scripts/ColorTheme';
-import { TipAnalyzer } from './src/scripts/TipAnalyzer';
 setThemeColorFromLocalStorage();
 
 // Load tips from localStorage, sort by date, then load into allTips

@@ -42,7 +42,7 @@ function removeBackgroundBlur() {
 
     <OnClickOutside @trigger="close">
       <NavBarMenuButton :isOpen="isMenuOpen" @toggle="toggleMenu" />
-      <NavBarMenu v-if="isMenuOpen" />
+      <NavBarMenu v-if="isMenuOpen" @close="close" />
     </OnClickOutside>
   </div>
 </template>
