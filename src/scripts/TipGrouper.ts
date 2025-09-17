@@ -1,6 +1,7 @@
 import { reactive } from "vue";
 
 import { Tip } from "./ClassTip";
+import { TipAnalyzer } from "./TipAnalyzer";
 
 const dayNames = [
   "Sunday",
@@ -10,6 +11,21 @@ const dayNames = [
   "Thursday",
   "Friday",
   "Saturday",
+];
+
+const monthNames = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 export const TipGrouper = {
@@ -39,11 +55,6 @@ export const TipGrouper = {
     return total;
   },
 
-  calculateGroupAverage: function (groupTips: Tip[]) {
-    const total = this.calculateGroupTotal(groupTips);
-    return Math.floor(total / groupTips.length);
-  },
-
   sortAllTipsByDate: function (tips: Tip[]) {
     tips.sort(function (a: Tip, b: Tip) {
       let date1 = Number(a.date.replaceAll("-", ""));
@@ -55,6 +66,15 @@ export const TipGrouper = {
       }
       return date2 - date1;
     });
+  },
+
+  getYear(dateString: string) {
+    return dateString.substring(0, 4);
+  },
+
+  getMonthName(dateString: string) {
+    const [year, month] = dateString.split("-").map(Number);
+    return monthNames[month - 1];
   },
 
   // Generic grouping function that takes a function for
@@ -69,7 +89,13 @@ export const TipGrouper = {
       groups[key].tips.push(tip);
       groups[key].total += tip.amount;
     });
-    return Object.values(groups);
+    return Object.values(groups).map((group: any) => ({
+      ...group,
+      average: TipAnalyzer.getAverageTip(group.tips),
+      median: TipAnalyzer.getMedianTip(group.tips),
+      highest: TipAnalyzer.getLargestTip(group.tips),
+      lowest: TipAnalyzer.getLowestTip(group.tips),
+    }));
   },
 
   groupByPeriod: function (tips: Tip[]) {
@@ -77,7 +103,20 @@ export const TipGrouper = {
   },
 
   groupByYear: function (tips: Tip[]) {
-    return this.groupBy(tips, (tip: Tip) => tip.date.substring(0, 4));
+    return this.groupBy(tips, (tip: Tip) => this.getYear(tip.date));
+  },
+
+  groupByMonth: function (tips: Tip[]) {
+    return this.groupBy(tips, (tip: Tip) => this.getMonthName(tip.date));
+  },
+
+  groupByYearAndMonth: function (tips: Tip[]) {
+    const monthGroups = this.groupBy(tips, (tip: Tip) => {
+      const year = this.getYear(tip.date);
+      const month = this.getMonthName(tip.date);
+      return `${year}-${month}`;
+    });
+    return this.nestGroupsByYear(monthGroups);
   },
 
   groupByDayOfWeek: function (tips: Tip[]) {
@@ -94,5 +133,42 @@ export const TipGrouper = {
   },
   groupByType: function (tips: Tip[]) {
     return this.groupBy(tips, (tip: Tip) => tip.type);
+  },
+
+  nestGroupsByYear: function (groups: any) {
+    const nestedGroups = {};
+
+    groups.forEach((group: any) => {
+      const key = this.getYear(group.period);
+      if (!nestedGroups[key]) {
+        nestedGroups[key] = {
+          period: key,
+          months: [],
+          maxTotal: 0,
+          maxHighest: 0,
+          maxAverage: 0,
+          leastLowest: Infinity,
+        };
+      }
+
+      // Strip year off front of period key for month label
+      group.period = group.period.split("-")[1];
+      nestedGroups[key].months.push(group);
+
+      // Update peak values for the year
+      if (group.total > nestedGroups[key].maxTotal) {
+        nestedGroups[key].maxTotal = group.total;
+      }
+      if (group.highest > nestedGroups[key].maxHighest) {
+        nestedGroups[key].maxHighest = group.highest;
+      }
+      if (group.average > nestedGroups[key].maxAverage) {
+        nestedGroups[key].maxAverage = group.average;
+      }
+      if (group.lowest < nestedGroups[key].leastLowest) {
+        nestedGroups[key].leastLowest = group.lowest;
+      }
+    });
+    return Object.values(nestedGroups);
   },
 };
