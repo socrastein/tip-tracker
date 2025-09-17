@@ -9,7 +9,7 @@
 }
 
 .slide-down-leave-active {
-  transition: transform .8s ease;
+  transition: transform 0.8s ease;
 }
 
 .slide-down-enter-from,
@@ -26,7 +26,7 @@
 /* Used for error messages */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity .3s;
+  transition: opacity 0.3s;
 }
 .fade-enter-from,
 .fade-leave-to {

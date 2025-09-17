@@ -1,3 +1,6 @@
+import "./style.css";
+import "./polish.css";
+
 import { createApp } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
 
@@ -10,9 +13,6 @@ import Stats from '/src/pages/Stats.vue';
 import { TipRepository } from './src/scripts/TipRepository';
 import { TipStore } from './src/scripts/TipStore';
 import { TipGrouper } from './src/scripts/TipGrouper';
-
-import "./style.css";
-import "./polish.css";
 
 import { setThemeColorFromLocalStorage } from './src/scripts/ColorTheme';
 setThemeColorFromLocalStorage();
