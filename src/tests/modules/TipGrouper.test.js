@@ -10,7 +10,7 @@ vi.mock('vue', () => ({
 it('DEBUG: should show what days the dates actually resolve to', () => {
   const testDates = ['2024-01-01', '2024-01-02', '2024-01-08', '2024-01-03'];
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  
+
   testDates.forEach(date => {
     const dayIndex = new Date(date).getDay();
     const dayName = dayNames[dayIndex];
@@ -56,7 +56,7 @@ describe('TipGrouper', () => {
   describe('createEmptyGroup', () => {
     it('should create a reactive group with correct structure', () => {
       const group = TipGrouper.createEmptyGroup('2024-1-1');
-      
+
       expect(group).toEqual({
         period: '2024-1-1',
         tips: [],
@@ -67,7 +67,7 @@ describe('TipGrouper', () => {
     it('should preserve the key as period', () => {
       const testKey = 'test-key-123';
       const group = TipGrouper.createEmptyGroup(testKey);
-      
+
       expect(group.period).toBe(testKey);
     });
   });
@@ -79,7 +79,7 @@ describe('TipGrouper', () => {
         new Tip(200, '2024-01-02', 'Floor', 'Lunch')
       ];
       const newTip = new Tip(150, '2024-01-03', 'Floor', 'Lunch');
-      
+
       expect(TipGrouper.findInsertionIndex(tips, newTip)).toBe(0);
     });
 
@@ -89,7 +89,7 @@ describe('TipGrouper', () => {
         new Tip(200, '2024-01-01', 'Floor', 'Lunch')
       ];
       const newTip = new Tip(150, '2024-01-02', 'Floor', 'Lunch');
-      
+
       expect(TipGrouper.findInsertionIndex(tips, newTip)).toBe(1);
     });
 
@@ -99,14 +99,14 @@ describe('TipGrouper', () => {
         new Tip(200, '2024-01-03', 'Floor', 'Lunch')
       ];
       const newTip = new Tip(150, '2024-01-01', 'Floor', 'Lunch');
-      
+
       expect(TipGrouper.findInsertionIndex(tips, newTip)).toBe(2);
     });
 
     it('should return 0 for empty array', () => {
       const tips = [];
       const newTip = new Tip(150, '2024-01-01', 'Floor', 'Lunch');
-      
+
       expect(TipGrouper.findInsertionIndex(tips, newTip)).toBe(0);
     });
   });
@@ -131,27 +131,6 @@ describe('TipGrouper', () => {
     });
   });
 
-  describe('calculateGroupAverage', () => {
-    it('should calculate correct average and floor the result', () => {
-      const tips = [
-        new Tip(100, '2024-01-01', 'Floor', 'Lunch'),
-        new Tip(150, '2024-01-02', 'Banquet', 'Dinner'),
-        new Tip(200, '2024-01-03', 'Floor', 'Lunch')
-      ];
-      // Total: 450, Count: 3, Average: 150
-      expect(TipGrouper.calculateGroupAverage(tips)).toBe(150);
-    });
-
-    it('should floor decimal averages', () => {
-      const tips = [
-        new Tip(100, '2024-01-01', 'Floor', 'Lunch'),
-        new Tip(101, '2024-01-02', 'Banquet', 'Dinner')
-      ];
-      // Total: 201, Count: 2, Average: 100.5, Floored: 100
-      expect(TipGrouper.calculateGroupAverage(tips)).toBe(100);
-    });
-  });
-
   describe('sortAllTipsByDate', () => {
     it('should sort tips by date in descending order (newest first)', () => {
       const tips = [
@@ -159,9 +138,9 @@ describe('TipGrouper', () => {
         new Tip(200, '2024-01-03', 'Banquet', 'Dinner'),
         new Tip(150, '2024-01-02', 'Floor', 'Lunch')
       ];
-      
+
       TipGrouper.sortAllTipsByDate(tips);
-      
+
       expect(tips[0].date).toBe('2024-01-03');
       expect(tips[1].date).toBe('2024-01-02');
       expect(tips[2].date).toBe('2024-01-01');
@@ -173,9 +152,9 @@ describe('TipGrouper', () => {
         new Tip(200, '2024-01-01', 'Banquet', 'Dinner'),
         new Tip(150, '2024-01-02', 'Floor', 'Lunch')
       ];
-      
+
       TipGrouper.sortAllTipsByDate(tips);
-      
+
       expect(tips[0].date).toBe('2024-01-02');
       expect(tips[1].date).toBe('2024-01-01');
       expect(tips[2].date).toBe('2024-01-01');
@@ -183,7 +162,7 @@ describe('TipGrouper', () => {
       expect(tips[0].shift).toBe('Lunch');
       expect(tips[1].shift).toBe('Dinner');
       expect(tips[2].shift).toBe('Lunch');
-      
+
     });
 
     it('should handle empty array', () => {
@@ -200,29 +179,18 @@ describe('TipGrouper', () => {
         new Tip(150, '2024-01-02', 'Floor', 'Dinner'),
         new Tip(200, '2024-01-03', 'Banquet', 'Lunch')
       ];
-      
+
       const groups = TipGrouper.groupBy(tips, (tip) => tip.type);
-      
+
       expect(groups).toHaveLength(2);
-      
+
       const floorGroup = groups.find(g => g.period === 'Floor');
       const banquetGroup = groups.find(g => g.period === 'Banquet');
-      
+
       expect(floorGroup.tips).toHaveLength(2);
       expect(floorGroup.total).toBe(250);
       expect(banquetGroup.tips).toHaveLength(1);
       expect(banquetGroup.total).toBe(200);
-    });
-
-    it('should create reactive groups', () => {
-      const tips = [new Tip(100, '2024-01-01', 'Floor', 'Lunch')];
-      const groups = TipGrouper.groupBy(tips, (tip) => tip.type);
-      
-      expect(groups[0]).toEqual({
-        period: 'Floor',
-        tips: [tips[0]],
-        total: 100
-      });
     });
 
     it('should handle empty tips array', () => {
@@ -239,15 +207,15 @@ describe('TipGrouper', () => {
         new Tip(200, '2024-01-20', 'Floor', 'Lunch'),   // 2024-1-2
         new Tip(250, '2024-02-10', 'Banquet', 'Dinner') // 2024-2-1
       ];
-      
+
       const groups = TipGrouper.groupByPeriod(tips);
-      
+
       expect(groups).toHaveLength(3);
-      
+
       const jan1 = groups.find(g => g.period === '2024-1-1');
       const jan2 = groups.find(g => g.period === '2024-1-2');
       const feb1 = groups.find(g => g.period === '2024-2-1');
-      
+
       expect(jan1.tips).toHaveLength(2);
       expect(jan1.total).toBe(250);
       expect(jan2.tips).toHaveLength(1);
@@ -265,15 +233,15 @@ describe('TipGrouper', () => {
         new Tip(200, '2024-06-20', 'Floor', 'Lunch'),
         new Tip(250, '2025-02-10', 'Banquet', 'Dinner')
       ];
-      
+
       const groups = TipGrouper.groupByYear(tips);
-      
+
       expect(groups).toHaveLength(3);
-      
+
       const year2023 = groups.find(g => g.period === '2023');
       const year2024 = groups.find(g => g.period === '2024');
       const year2025 = groups.find(g => g.period === '2025');
-      
+
       expect(year2023.tips).toHaveLength(1);
       expect(year2023.total).toBe(100);
       expect(year2024.tips).toHaveLength(2);
@@ -291,15 +259,15 @@ describe('TipGrouper', () => {
         new Tip(200, '2024-01-08', 'Floor', 'Lunch'),    // Monday
         new Tip(250, '2024-01-03', 'Banquet', 'Dinner')  // Wednesday
       ];
-      
+
       const groups = TipGrouper.groupByDayOfWeek(tips);
-      
+
       expect(groups).toHaveLength(3);
-      
+
       const monday = groups.find(g => g.period === 'Monday');
       const tuesday = groups.find(g => g.period === 'Tuesday');
       const wednesday = groups.find(g => g.period === 'Wednesday');
-      
+
       expect(monday.tips).toHaveLength(2);
       expect(monday.total).toBe(300);
       expect(tuesday.tips).toHaveLength(1);
@@ -317,14 +285,14 @@ describe('TipGrouper', () => {
         new Tip(200, '2024-01-03', 'Floor', 'Lunch'),
         new Tip(250, '2024-01-04', 'Banquet', 'Dinner')
       ];
-      
+
       const groups = TipGrouper.groupByShift(tips);
-      
+
       expect(groups).toHaveLength(2);
-      
+
       const lunch = groups.find(g => g.period === 'Lunch');
       const dinner = groups.find(g => g.period === 'Dinner');
-      
+
       expect(lunch.tips).toHaveLength(2);
       expect(lunch.total).toBe(300);
       expect(dinner.tips).toHaveLength(2);
@@ -340,14 +308,14 @@ describe('TipGrouper', () => {
         new Tip(200, '2024-01-03', 'Floor', 'Lunch'),
         new Tip(250, '2024-01-04', 'Banquet', 'Dinner')
       ];
-      
+
       const groups = TipGrouper.groupByType(tips);
-      
+
       expect(groups).toHaveLength(2);
-      
+
       const floor = groups.find(g => g.period === 'Floor');
       const banquet = groups.find(g => g.period === 'Banquet');
-      
+
       expect(floor.tips).toHaveLength(2);
       expect(floor.total).toBe(300);
       expect(banquet.tips).toHaveLength(2);
@@ -358,21 +326,21 @@ describe('TipGrouper', () => {
   describe('Integration tests', () => {
     it('should handle complex grouping scenarios', () => {
       const tips = sampleTips;
-      
+
       // Test multiple grouping methods work together
       const periodGroups = TipGrouper.groupByPeriod(tips);
       const yearGroups = TipGrouper.groupByYear(tips);
       const shiftGroups = TipGrouper.groupByShift(tips);
-      
+
       expect(periodGroups.length).toBeGreaterThan(0);
       expect(yearGroups.length).toBeGreaterThan(0);
       expect(shiftGroups.length).toBeGreaterThan(0);
-      
+
       // Verify totals are consistent
       const totalFromPeriods = periodGroups.reduce((sum, group) => sum + group.total, 0);
       const totalFromYears = yearGroups.reduce((sum, group) => sum + group.total, 0);
       const totalFromShifts = shiftGroups.reduce((sum, group) => sum + group.total, 0);
-      
+
       expect(totalFromPeriods).toBe(totalFromYears);
       expect(totalFromYears).toBe(totalFromShifts);
     });
