@@ -1,5 +1,4 @@
 import { Tip } from "./ClassTip";
-import { reactive } from "vue";
 
 /**
  * Handles all localStorage logic for tips
@@ -45,7 +44,7 @@ export const TipRepository = {
     const type = splitValue[1];
     const shift = splitKey[2];
 
-    const tip = reactive(new Tip(amount, date, type, shift));
+    const tip = new Tip(amount, date, type, shift);
 
     return tip;
   },
@@ -71,9 +70,59 @@ export const TipRepository = {
     tip.deleteFromLocalStorage();
   },
 
-  exportTipsToJSON: function (tips: Tip[]) {},
+  exportTipsToJSON: function (tips: Tip[]) {
+    const valuesArray = [] as any[];
+    for (const tip of tips) {
+      const key = tip.storageKey;
+      const value = tip.storageValue;
 
-  importTipsFromJSON: function (jsonString: string) {},
+      const valuesObject = {
+        key: value,
+      };
+      valuesArray.push(valuesObject);
+    }
+  },
+
+  importTipsFromJSON: function (jsonString: string) {
+    const tips = [] as Tip[];
+
+    for (const [key, value] of Object.entries(jsonString)) {
+      const split = value.split(".");
+    }
+  },
+
+  importLegacyTipsFromJSON: function (jsonString: string) {
+    const tips = [] as Tip[];
+    const tipMap = new Map<string, Tip>();
+    const parsed = JSON.parse(jsonString);
+
+    for (const [key, value] of Object.entries(parsed)) {
+      const split = (value as string).split(".");
+      if(split[0] === "0") continue; // Skip zero amount tips
+      const tip = new Tip(parseInt(split[0]), split[1], split[2], "Dinner");
+      // console.log(tip);
+      // Check if date already exists in map
+      if (!tipMap.has(tip.date)) {
+        tipMap.set(tip.date, tip);
+      } else {
+        // Decide lunch or dinner based on amount
+        // and then change shift of tip in tips array
+        const existingTip = tipMap.get(tip.date);
+        if (existingTip) {
+          if (tip.amount > existingTip.amount) {
+            existingTip.shift = "Lunch";
+            tip.shift = "Dinner";
+          } else {
+            existingTip.shift = "Dinner";
+            tip.shift = "Lunch";
+          }
+        }
+        tips.push(tip);
+      }
+    }
+    tips.push(...tipMap.values());
+    return tips;
+  },
 
   downloadJSONFile(tips: Tip[], filename?: string) {},
 };

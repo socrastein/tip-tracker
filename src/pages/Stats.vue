@@ -3,6 +3,7 @@ import { ref, defineAsyncComponent } from "vue";
 
 import StatsSortHeader from "../components/StatsSortHeader.vue";
 import StatsSummaryMonth from "../components/StatsSummaryMonth.vue";
+import StatsSummaryDay from "../components/StatsSummaryDay.vue";
 
 const dataDisplayed = ref("year");
 
@@ -21,7 +22,7 @@ const StatsSummaryYear = defineAsyncComponent(() =>
 
     <StatsSummaryYear v-if="dataDisplayed === 'year'" />
     <StatsSummaryMonth v-if="dataDisplayed === 'month'" />
-    <p v-if="dataDisplayed === 'day'">Day</p>
+    <StatsSummaryDay v-if="dataDisplayed === 'day'" />
   </div>
 </template>
 

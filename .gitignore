@@ -14,3 +14,10 @@ programNotes.txt
 src/TipMemory Refactoring Plan.pdf
 cache.appcache
 package-lock.json
+.gitignore
+.idea/vcs.xml
+.idea/tip-tracker.iml
+.idea/modules.xml
+.idea/misc.xml
+.idea/IntelliLang.xml
+Tips JSON.txt
