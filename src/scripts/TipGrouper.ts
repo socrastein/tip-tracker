@@ -1,4 +1,4 @@
-import { markRaw, shallowReactive } from "vue";
+import { markRaw, reactive, shallowReactive } from "vue";
 
 import { Tip } from "./ClassTip";
 import { TipAnalyzer } from "./TipAnalyzer";
@@ -42,7 +42,7 @@ export const TipGrouper = {
   },
 
   createEmptyGroup: function (key: string): Group {
-    const group = shallowReactive({ period: key, tips: [] as Tip[], total: 0 });
+    const group: Group = reactive({ period: key, tips: [], total: 0 });
     return group;
   },
 

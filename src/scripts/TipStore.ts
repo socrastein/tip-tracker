@@ -1,4 +1,4 @@
-import { reactive, markRaw } from "vue";
+import { reactive, markRaw, shallowReactive } from "vue";
 import { Tip } from "./ClassTip";
 import { TipGrouper } from "./TipGrouper";
 import { TipRepository } from "./TipRepository";
@@ -130,7 +130,7 @@ export const TipStore = {
     }
 
     // Wrap Tip in markRaw to preserve class instance
-    this._tipState.allTips.push(markRaw(tip));
+    (this._tipState.allTips as Tip[]).push(tip);
 
     // Find or create group
     const key = TipGrouper.getGroupKey(tip.date);
@@ -177,7 +177,6 @@ export const TipStore = {
       newValues.type,
       newValues.shift,
     );
-
     this.addTip(newTip);
     return newTip;
   },

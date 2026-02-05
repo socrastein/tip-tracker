@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import Tip from "../components/Tip.vue";
 import PayPeriodSummary from "../components/PayPeriodSummary.vue";
 import { TipStore } from "../scripts/TipStore";
@@ -7,8 +7,10 @@ import { TipStore } from "../scripts/TipStore";
 // Reactive array
 const groupedTips = computed(() => TipStore.getGroupedTips());
 
-const batchSize = 2;
-const visibleGroups = ref([]);
+const batchSize = 3;
+const visibleGroups = computed(() =>
+  groupedTips.value.slice(0, currentIndex + batchSize),
+);
 let currentIndex = 0;
 
 // load the next batch of groups as user scrolls
@@ -17,6 +19,11 @@ const loadMoreGroups = () => {
   visibleGroups.value.push(...groupedTips.value.slice(currentIndex, nextIndex));
   currentIndex = nextIndex;
 };
+
+watch(groupedTips, (newGroups) => {
+  // reset visibleGroups when groupedTips changes
+  visibleGroups.value = newGroups.slice(0, currentIndex);
+});
 
 // load initial batch of tip groups
 // should fill the viewport and then some
@@ -60,7 +67,7 @@ onUnmounted(() => {
         />
         <Tip
           v-for="tip in group.tips"
-          :key="tip.date + tip.shift + Date.now()"
+          :key="tip.date + tip.shift"
           :amount="tip.amount"
           :date="tip.date"
           :type="tip.type"
