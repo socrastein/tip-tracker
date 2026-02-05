@@ -1,7 +1,13 @@
-import { reactive } from "vue";
+import { markRaw, shallowReactive } from "vue";
 
 import { Tip } from "./ClassTip";
 import { TipAnalyzer } from "./TipAnalyzer";
+
+interface Group {
+  period: string;
+  tips: Tip[];
+  total: number;
+}
 
 const dayNames = [
   "Sunday",
@@ -35,14 +41,14 @@ export const TipGrouper = {
     return `${year}-${month}-${half}`;
   },
 
-  createEmptyGroup: function (key: string) {
-    const group = reactive({ period: key, tips: [], total: 0 });
+  createEmptyGroup: function (key: string): Group {
+    const group = shallowReactive({ period: key, tips: [] as Tip[], total: 0 });
     return group;
   },
 
   findInsertionIndex: function (groupTips: Tip[], tip: Tip) {
     const tipIndex = groupTips.findIndex(
-      (existingTip: Tip) => existingTip.date < tip.date
+      (existingTip: Tip) => existingTip.date < tip.date,
     );
     return tipIndex === -1 ? groupTips.length : tipIndex;
   },
@@ -80,16 +86,25 @@ export const TipGrouper = {
   // Generic grouping function that takes a function for
   // creating group keys from tip objects.
   groupBy: function (tips: Tip[], keyExtractor: (tip: Tip) => string) {
-    const groups = {};
+    const groups: Record<string, Group> = {};
+
     tips.forEach((tip: Tip) => {
       const key = keyExtractor(tip); // call the function passed in
+
       if (!groups[key]) {
-        groups[key] = reactive({ period: key, tips: [], total: 0 });
+        groups[key] = shallowReactive<Group>({
+          period: key,
+          tips: [],
+          total: 0,
+        });
       }
-      groups[key].tips.push(tip);
+
+      // Preserve Tip class instance
+      groups[key].tips.push(markRaw(tip));
       groups[key].total += tip.amount;
     });
-    return Object.values(groups).map((group: any) => ({
+
+    return Object.values(groups).map((group: Group) => ({
       ...group,
       average: TipAnalyzer.getAverageTip(group.tips),
       median: TipAnalyzer.getMedianTip(group.tips),
@@ -136,7 +151,7 @@ export const TipGrouper = {
   },
 
   nestGroupsByYear: function (groups: any) {
-    const nestedGroups = {};
+    const nestedGroups: { [key: string]: any } = {};
 
     groups.forEach((group: any) => {
       const key = this.getYear(group.period);

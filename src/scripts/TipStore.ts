@@ -1,4 +1,4 @@
-import { reactive } from "vue";
+import { reactive, markRaw } from "vue";
 import { Tip } from "./ClassTip";
 import { TipGrouper } from "./TipGrouper";
 import { TipRepository } from "./TipRepository";
@@ -15,8 +15,8 @@ interface Group {
 
 export const TipStore = {
   _tipState: reactive({
-    allTips: [],
-    groupedTips: [],
+    allTips: [] as Tip[], // Tip instances will be markRaw when added
+    groupedTips: [] as Group[], // Groups are reactive, but tips inside are markRaw
   }),
 
   setAllTips: function (tips: Tip[]) {
@@ -27,7 +27,7 @@ export const TipStore = {
     this._tipState.groupedTips.splice(
       0,
       this._tipState.groupedTips.length,
-      ...groups
+      ...groups,
     );
   },
 
@@ -75,18 +75,16 @@ export const TipStore = {
     }
   },
 
-  findGroupByKey: function (key: string) {
-    let group = this._tipState.groupedTips.find(
-      (group: any) => group.period === key
+  findGroupByKey: function (key: string): Group | undefined {
+    return (this._tipState.groupedTips as Group[]).find(
+      (group) => group.period === key,
     );
-    // Returns undefined if no group found
-    return group;
   },
 
   insertGroupInOrder: function (group: Group) {
     // See if there's a group with a period later than current group
     const index = this._tipState.groupedTips.findIndex(
-      (existingGroup: any) => existingGroup.period < group.period
+      (existingGroup) => existingGroup.period < group.period,
     );
     // If none found, group represents oldest period so push to end of array
     if (index === -1) {
@@ -97,7 +95,10 @@ export const TipStore = {
     }
   },
 
-  removeTipFromGroup: function (tip: Tip, group: Group) {
+  removeTipFromGroup: function (tip: Tip, group: Group | undefined) {
+    if (!group) {
+      throw new Error(`Could not find group for tip ${tip}`);
+    }
     let tipIndex = group.tips.indexOf(tip);
     if (tipIndex === -1) {
       throw new Error(`Could not find ${tip} in group ${group.tips}`);
@@ -110,7 +111,7 @@ export const TipStore = {
     if (group.tips.length === 0) {
       this._tipState.groupedTips.splice(
         this._tipState.groupedTips.indexOf(group),
-        1
+        1,
       );
     }
   },
@@ -120,16 +121,18 @@ export const TipStore = {
     if (this._tipState.allTips.includes(tip)) {
       throw new Error(`The tip ${tip} already exists in allTips`);
     }
-    // Check that there isn't already a tip with the same date and shift as the one being added
+    // Check for duplicates by date/shift
     const possibleDuplicate = this.checkForDuplicateTip(tip.date, tip.shift);
     if (possibleDuplicate !== null) {
       throw new Error(
-        `DUPLICATE FOUND: The tip ${tip} has same date and shift as ${possibleDuplicate}`
+        `DUPLICATE FOUND: The tip ${tip} has same date and shift as ${possibleDuplicate}`,
       );
     }
 
-    this._tipState.allTips.push(tip);
+    // Wrap Tip in markRaw to preserve class instance
+    this._tipState.allTips.push(markRaw(tip));
 
+    // Find or create group
     const key = TipGrouper.getGroupKey(tip.date);
     let group = this.findGroupByKey(key);
 
@@ -138,8 +141,9 @@ export const TipStore = {
       this.insertGroupInOrder(group);
     }
 
+    // Add tip to group, again markRaw
     const insertIndex = TipGrouper.findInsertionIndex(group.tips, tip);
-    group.tips.splice(insertIndex, 0, tip);
+    group.tips.splice(insertIndex, 0, markRaw(tip));
     group.total = TipGrouper.calculateGroupTotal(group.tips);
 
     TipRepository.saveToStorage(tip);
@@ -163,20 +167,25 @@ export const TipStore = {
 
   editTip: function (
     tip: Tip,
-    newValues: { amount: number; date: string; type: string; shift: string }
+    newValues: { amount: number; date: string; type: string; shift: string },
   ) {
     this.removeTip(tip);
-    const newTip = reactive(
-      new Tip(newValues.amount, newValues.date, newValues.type, newValues.shift)
+
+    const newTip = new Tip(
+      newValues.amount,
+      newValues.date,
+      newValues.type,
+      newValues.shift,
     );
+
     this.addTip(newTip);
     return newTip;
   },
 
   checkForDuplicateTip: function (date: string, shift: string): Tip | null {
     return (
-      this._tipState.allTips.find(
-        (tip: Tip) => tip.date === date && tip.shift === shift
+      (this._tipState.allTips as Tip[]).find(
+        (tip: Tip) => tip.date === date && tip.shift === shift,
       ) || null
     );
   },

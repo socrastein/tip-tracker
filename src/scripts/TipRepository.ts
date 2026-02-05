@@ -1,4 +1,5 @@
 import { Tip } from "./ClassTip";
+import { markRaw } from "vue";
 
 /**
  * Handles all localStorage logic for tips
@@ -59,7 +60,7 @@ export const TipRepository = {
       // Check for prefix used for key generation in Tip class
       if (this.isValidTipKey(key)) {
         const tip = this.loadFromStorage(key);
-        tips.push(tip);
+        tips.push(markRaw(tip));
       } else continue;
     }
 
@@ -91,38 +92,38 @@ export const TipRepository = {
     }
   },
 
-  importLegacyTipsFromJSON: function (jsonString: string) {
-    const tips = [] as Tip[];
-    const tipMap = new Map<string, Tip>();
-    const parsed = JSON.parse(jsonString);
+  // importLegacyTipsFromJSON: function (jsonString: string) {
+  //   const tips = [] as Tip[];
+  //   const tipMap = new Map<string, Tip>();
+  //   const parsed = JSON.parse(jsonString);
 
-    for (const [key, value] of Object.entries(parsed)) {
-      const split = (value as string).split(".");
-      if(split[0] === "0") continue; // Skip zero amount tips
-      const tip = new Tip(parseInt(split[0]), split[1], split[2], "Dinner");
-      // console.log(tip);
-      // Check if date already exists in map
-      if (!tipMap.has(tip.date)) {
-        tipMap.set(tip.date, tip);
-      } else {
-        // Decide lunch or dinner based on amount
-        // and then change shift of tip in tips array
-        const existingTip = tipMap.get(tip.date);
-        if (existingTip) {
-          if (tip.amount > existingTip.amount) {
-            existingTip.shift = "Lunch";
-            tip.shift = "Dinner";
-          } else {
-            existingTip.shift = "Dinner";
-            tip.shift = "Lunch";
-          }
-        }
-        tips.push(tip);
-      }
-    }
-    tips.push(...tipMap.values());
-    return tips;
-  },
+  //   for (const [key, value] of Object.entries(parsed)) {
+  //     const split = (value as string).split(".");
+  //     if(split[0] === "0") continue; // Skip zero amount tips
+  //     const tip = new Tip(parseInt(split[0]), split[1], split[2], "Dinner");
+  //     // console.log(tip);
+  //     // Check if date already exists in map
+  //     if (!tipMap.has(tip.date)) {
+  //       tipMap.set(tip.date, tip);
+  //     } else {
+  //       // Decide lunch or dinner based on amount
+  //       // and then change shift of tip in tips array
+  //       const existingTip = tipMap.get(tip.date);
+  //       if (existingTip) {
+  //         if (tip.amount > existingTip.amount) {
+  //           existingTip.shift = "Lunch";
+  //           tip.shift = "Dinner";
+  //         } else {
+  //           existingTip.shift = "Dinner";
+  //           tip.shift = "Lunch";
+  //         }
+  //       }
+  //       tips.push(tip);
+  //     }
+  //   }
+  //   tips.push(...tipMap.values());
+  //   return tips;
+  // },
 
   downloadJSONFile(tips: Tip[], filename?: string) {},
 };
