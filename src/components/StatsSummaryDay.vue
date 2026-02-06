@@ -6,7 +6,7 @@ import { TipStore } from "../scripts/TipStore";
 import { TipGrouper } from "../scripts/TipGrouper";
 
 const yearGroups = computed(() =>
-  TipGrouper.groupByYearAndMonth(TipStore.getAllTips()).slice().reverse()
+  TipGrouper.groupByYearAndDayOfWeek(TipStore.getAllTips()).slice().reverse(),
 );
 
 const visibleGroups = ref([]);
@@ -27,11 +27,11 @@ onMounted(() => {
 
       <div
         class="monthSummary"
-        v-for="month in year.months"
-        :key="year.period + month.period"
+        v-for="day in year.intervals"
+        :key="year.period + day.period"
       >
         <div class="gridLabels">
-          <h3>{{ month.period.substring(0, 3) }}</h3>
+          <h3>{{ day.period.substring(0, 3) }}</h3>
           <p>Total</p>
           <p>High</p>
           <p>Avg</p>
@@ -40,20 +40,20 @@ onMounted(() => {
 
         <hr />
 
-        <div class="monthGrid">
+        <div class="daysGrid">
           <div class="gridValues">
-            <p class="small">{{ month.tips.length }}</p>
-            <p :class="{ bold: month.total === year.maxTotal }">
-              {{ month.total }}
+            <p class="small">{{ day.tips.length }}</p>
+            <p :class="{ bold: day.total === year.maxTotal }">
+              {{ day.total }}
             </p>
-            <p :class="{ bold: month.highest === year.maxHighest }">
-              {{ month.highest }}
+            <p :class="{ bold: day.highest === year.maxHighest }">
+              {{ day.highest }}
             </p>
-            <p :class="{ bold: month.average === year.maxAverage }">
-              {{ month.average }}
+            <p :class="{ bold: day.average === year.maxAverage }">
+              {{ day.average }}
             </p>
-            <p :class="{ bold: month.lowest === year.leastLowest }">
-              {{ month.lowest }}
+            <p :class="{ bold: day.lowest === year.leastLowest }">
+              {{ day.lowest }}
             </p>
           </div>
         </div>
@@ -102,7 +102,7 @@ h3 {
   width: 100%;
 }
 
-.monthGrid {
+.daysGrid {
   display: flex;
   flex-direction: column;
   justify-content: center;

@@ -19,6 +19,16 @@ const dayNames = [
   "Saturday",
 ];
 
+const sortedDays = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+]
+
 const monthNames = [
   "January",
   "February",
@@ -134,6 +144,25 @@ export const TipGrouper = {
     return this.nestGroupsByYear(monthGroups);
   },
 
+  groupByYearAndDayOfWeek: function (tips: Tip[]) {
+    const dayGroups = this.groupBy(tips, (tip: Tip) => {
+      const [year, month, day] = tip.date.split("-").map(Number);
+      const localDate = new Date(year, month - 1, day); // month is 0-indexed
+      const dayOfWeek = dayNames[localDate.getDay()];
+      return `${year}-${dayOfWeek}`;
+    });
+    const nestedGroups = this.nestGroupsByYear(dayGroups);
+    nestedGroups.forEach((yearGroup: any) => {
+      // Sort yearGroup.intervals by day of week order
+      yearGroup.intervals.sort((a: any, b: any) => {
+        const dayA = sortedDays.indexOf(a.period);
+        const dayB = sortedDays.indexOf(b.period);
+        return dayA - dayB;
+      });
+    })
+    return nestedGroups;
+  },
+
   groupByDayOfWeek: function (tips: Tip[]) {
     return this.groupBy(tips, (tip: Tip) => {
       // Parse the date as local time instead of UTC
@@ -158,7 +187,7 @@ export const TipGrouper = {
       if (!nestedGroups[key]) {
         nestedGroups[key] = {
           period: key,
-          months: [],
+          intervals: [],
           maxTotal: 0,
           maxHighest: 0,
           maxAverage: 0,
@@ -168,7 +197,7 @@ export const TipGrouper = {
 
       // Strip year off front of period key for month label
       group.period = group.period.split("-")[1];
-      nestedGroups[key].months.push(group);
+      nestedGroups[key].intervals.push(group);
 
       // Update peak values for the year
       if (group.total > nestedGroups[key].maxTotal) {

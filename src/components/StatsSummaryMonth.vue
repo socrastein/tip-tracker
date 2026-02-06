@@ -27,7 +27,7 @@ onMounted(() => {
 
       <div
         class="monthSummary"
-        v-for="month in year.months"
+        v-for="month in year.intervals"
         :key="year.period + month.period"
       >
         <div class="gridLabels">
