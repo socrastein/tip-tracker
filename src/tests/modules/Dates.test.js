@@ -82,10 +82,10 @@ describe("Dates module", () => {
 
       it("should handle full ISO datetime strings", () => {
         expect(getYearMonthDayString("2024-01-15T10:30:00Z")).toMatch(
-          /^2024-01-(14|15)$/
+          /^2024-01-(14|15)$/,
         );
         expect(getYearMonthDayString("2024-06-20T15:45:30.123Z")).toMatch(
-          /^2024-06-(19|20)$/
+          /^2024-06-(19|20)$/,
         );
       });
     });
@@ -104,7 +104,7 @@ describe("Dates module", () => {
       it("should handle different years correctly", () => {
         expect(getYearMonthDayString("1999-12-31")).toMatch(/^1999-12-31$/);
         expect(getYearMonthDayString("2030-06-15")).toMatch(
-          /^2030-06-(14|15)$/
+          /^2030-06-(14|15)$/,
         );
       });
     });
@@ -112,19 +112,19 @@ describe("Dates module", () => {
     describe("error handling", () => {
       it("should throw error for invalid date strings", () => {
         expect(() => getYearMonthDayString("invalid date")).toThrow(
-          "Invalid date: invalid date provided to getYearMonthDayString()"
+          "Invalid date: invalid date provided to getYearMonthDayString()",
         );
         expect(() => getYearMonthDayString("not-a-date")).toThrow(
-          "Invalid date: not-a-date provided to getYearMonthDayString()"
+          "Invalid date: not-a-date provided to getYearMonthDayString()",
         );
         expect(() => getYearMonthDayString("13/45/2024")).toThrow(
-          "Invalid date: 13/45/2024 provided to getYearMonthDayString()"
+          "Invalid date: 13/45/2024 provided to getYearMonthDayString()",
         );
       });
 
       it("should throw error for invalid numbers", () => {
         expect(() => getYearMonthDayString(NaN)).toThrow(
-          "Invalid date: NaN provided to getYearMonthDayString()"
+          "Invalid date: NaN provided to getYearMonthDayString()",
         );
       });
 
@@ -135,7 +135,7 @@ describe("Dates module", () => {
 
       it("should handle null and undefined gracefully", () => {
         expect(() => getYearMonthDayString(null)).toThrow(
-          "Invalid date: null provided to getYearMonthDayString()"
+          "Invalid date: null provided to getYearMonthDayString()",
         );
         expect(() => getYearMonthDayString(undefined)).not.toThrow(); // undefined should use default (today)
       });

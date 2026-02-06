@@ -5,7 +5,7 @@ export function mockTip(
   amount: number,
   date = "2025-09-10",
   type = "Banquet",
-  shift = "Dinner"
+  shift = "Dinner",
 ) {
   return new Tip(amount, date, type, shift);
 }

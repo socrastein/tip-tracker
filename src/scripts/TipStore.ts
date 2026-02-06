@@ -1,4 +1,4 @@
-import { reactive, markRaw, shallowReactive } from "vue";
+import { reactive } from "vue";
 import { Tip } from "./ClassTip";
 import { TipGrouper } from "./TipGrouper";
 import { TipRepository } from "./TipRepository";
@@ -15,8 +15,8 @@ interface Group {
 
 export const TipStore = {
   _tipState: reactive({
-    allTips: [] as Tip[], // Tip instances will be markRaw when added
-    groupedTips: [] as Group[], // Groups are reactive, but tips inside are markRaw
+    allTips: [] as Tip[],
+    groupedTips: [] as Group[],
   }),
 
   setAllTips: function (tips: Tip[]) {
@@ -129,7 +129,6 @@ export const TipStore = {
       );
     }
 
-    // Wrap Tip in markRaw to preserve class instance
     (this._tipState.allTips as Tip[]).push(tip);
 
     // Find or create group
@@ -141,9 +140,8 @@ export const TipStore = {
       this.insertGroupInOrder(group);
     }
 
-    // Add tip to group, again markRaw
     const insertIndex = TipGrouper.findInsertionIndex(group.tips, tip);
-    group.tips.splice(insertIndex, 0, markRaw(tip));
+    group.tips.splice(insertIndex, 0, tip);
     group.total = TipGrouper.calculateGroupTotal(group.tips);
 
     TipRepository.saveToStorage(tip);

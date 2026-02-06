@@ -2,12 +2,16 @@
 /** @vitest-environment node  */
 
 import { expect, it, describe, beforeEach } from "vitest";
-
+import { setupMockLocalStorage } from "../MockLocalStorage";
 import { mockTip, generateMockTips } from "../MockTips";
 import { TipRepository } from "../../scripts/TipRepository";
 
 describe("TipRepository", () => {
-  beforeEach(() => localStorage.clear());
+  setupMockLocalStorage();
+
+  beforeEach(() => {
+    localStorage.clear();
+  });
 
   it("mockStorage is active", () => {
     if (typeof localStorage._setStore !== "function")

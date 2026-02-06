@@ -1,5 +1,4 @@
 import { Tip } from "./ClassTip";
-import { markRaw } from "vue";
 
 /**
  * Handles all localStorage logic for tips
@@ -60,7 +59,7 @@ export const TipRepository = {
       // Check for prefix used for key generation in Tip class
       if (this.isValidTipKey(key)) {
         const tip = this.loadFromStorage(key);
-        tips.push(markRaw(tip));
+        tips.push(tip);
       } else continue;
     }
 

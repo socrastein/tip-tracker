@@ -1,4 +1,4 @@
-import { markRaw, reactive, shallowReactive } from "vue";
+import { reactive, shallowReactive } from "vue";
 
 import { Tip } from "./ClassTip";
 import { TipAnalyzer } from "./TipAnalyzer";
@@ -100,7 +100,7 @@ export const TipGrouper = {
       }
 
       // Preserve Tip class instance
-      groups[key].tips.push(markRaw(tip));
+      groups[key].tips.push(tip);
       groups[key].total += tip.amount;
     });
 
