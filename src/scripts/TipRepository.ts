@@ -36,7 +36,16 @@ export const TipRepository = {
     const splitValue = value.split(".");
 
     if (splitKey.length !== 3 || splitValue.length !== 2) {
-      throw new Error(`Invalid tip data format for key: ${key}`);
+      // For any tip that was accidentally stored with a decimal value
+      if (typeof parseInt(splitValue[1]) == "number") {
+        // Remove the decimal portion of the amount value and continue loading tip
+        splitValue.splice(1, 1);
+        // Resave the tip without the decimal value to prevent future loading issues
+        const correctedValue = splitValue.join(".");
+        localStorage.setItem(key, correctedValue);
+      } else {
+        throw new Error(`Invalid tip data format for key: ${key}`);
+      }
     }
 
     const amount = parseInt(splitValue[0]);

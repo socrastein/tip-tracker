@@ -56,6 +56,14 @@ function isFormInputValid(targetTip) {
     return false;
   }
 
+  // Don't allow decimal amounts for tips
+  if (inputAmount.value % 1 !== 0) {
+    errorMessage.value = "Amount must be a whole number";
+    console.log(errorMessage.value);
+    showError.value = true;
+    return false;
+  }
+
   const duplicate = TipStore.checkForDuplicateTip(
     inputDate.value,
     inputShift.value
