@@ -1,8 +1,19 @@
 <script setup>
 import { RouterLink } from "vue-router";
 import ColorThemeMenu from "../components/ColorThemeMenu.vue";
+import { BackupService } from "../scripts/BackupService";
 
 const emit = defineEmits(["close"]);
+
+// This component is remounted each time the menu opens (v-if in NavBar),
+// so a plain read is always fresh.
+const lastBackup = BackupService.getLastBackupInfo();
+
+function formatBackupTime(time) {
+  const monthDay = time.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const clock = time.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return `${monthDay} @ ${clock}`;
+}
 </script>
 
 <template>
@@ -15,6 +26,10 @@ const emit = defineEmits(["close"]);
         >Stats Page</router-link
       >
       <ColorThemeMenu />
+      <div v-if="lastBackup" class="lastSaved">
+        <span>Last saved: {{ lastBackup.count }} tips</span>
+        <span>{{ formatBackupTime(lastBackup.time) }}</span>
+      </div>
     </div>
   </transition>
 </template>
@@ -53,5 +68,18 @@ const emit = defineEmits(["close"]);
   border-radius: 0.5rem;
   background-color: var(--backgroundDark);
   font-weight: bold;
+}
+
+.lastSaved {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+
+  font-size: 0.75rem;
+  color: var(--themeColor);
+  opacity: 0.65;
+  text-align: center;
 }
 </style>

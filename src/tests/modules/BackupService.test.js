@@ -80,6 +80,38 @@ describe("BackupService", () => {
     });
   });
 
+  describe("getLastBackupInfo", () => {
+    it("is null when no backup has been recorded", () => {
+      expect(BackupService.getLastBackupInfo()).toBeNull();
+    });
+
+    it("is null for legacy backups that predate the timestamp key", () => {
+      localStorage.setItem(BackupService.LAST_PAYLOAD_KEY, "[]");
+      localStorage.setItem(
+        BackupService.LAST_BACKUP_DATE_KEY,
+        getYearMonthDayString()
+      );
+      expect(BackupService.getLastBackupInfo()).toBeNull();
+    });
+
+    it("returns the tip count and a time near now after recordBackup", () => {
+      const before = Date.now();
+      BackupService.recordBackup(BackupService.buildTipsPayload(tips));
+      const info = BackupService.getLastBackupInfo();
+      expect(info.count).toEqual(3);
+      expect(Math.abs(info.time.getTime() - before)).toBeLessThan(5000);
+    });
+
+    it("is null when the stored payload is not valid JSON", () => {
+      localStorage.setItem(BackupService.LAST_PAYLOAD_KEY, "not-json");
+      localStorage.setItem(
+        BackupService.LAST_BACKUP_TIME_KEY,
+        new Date().toISOString()
+      );
+      expect(BackupService.getLastBackupInfo()).toBeNull();
+    });
+  });
+
   describe("runBackupCheck", () => {
     it("pings the server then POSTs all tips when everything is fresh", async () => {
       seedTips();
@@ -104,6 +136,9 @@ describe("BackupService", () => {
       expect(localStorage.getItem(BackupService.LAST_PAYLOAD_KEY)).toEqual(
         BackupService.buildTipsPayload(tips)
       );
+      expect(
+        localStorage.getItem(BackupService.LAST_BACKUP_TIME_KEY)
+      ).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     });
 
     it("does nothing when the home server is unreachable", async () => {

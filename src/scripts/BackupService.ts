@@ -40,6 +40,7 @@ export const BackupService = {
   SERVER_URL_KEY: "tipTracker(backup).serverUrl",
   LAST_BACKUP_DATE_KEY: "tipTracker(backup).lastBackupDate",
   LAST_PAYLOAD_KEY: "tipTracker(backup).lastPayload",
+  LAST_BACKUP_TIME_KEY: "tipTracker(backup).lastBackupTime",
 
   BACKUP_INTERVAL_MS: 60 * 60 * 1000, // ping once an hour
   HEALTH_TIMEOUT_MS: 5 * 1000,
@@ -141,10 +142,34 @@ export const BackupService = {
     }
   },
 
-  /** Record a successful backup: today's date plus the snapshot just sent. */
+  /** Record a successful backup: today's date, the snapshot just sent, and when it happened. */
   recordBackup(payload: string): void {
     localStorage.setItem(this.LAST_BACKUP_DATE_KEY, getYearMonthDayString());
     localStorage.setItem(this.LAST_PAYLOAD_KEY, payload);
+    localStorage.setItem(this.LAST_BACKUP_TIME_KEY, new Date().toISOString());
+  },
+
+  /**
+   * Info about the last successful backup for the "Last saved" indicator:
+   * how many tips it held and when it was sent. Null if no backup has been
+   * recorded (or the recorded state is unreadable, e.g. a pre-timestamp
+   * backup whose time was never stored).
+   */
+  getLastBackupInfo(): { count: number; time: Date } | null {
+    const payload = localStorage.getItem(this.LAST_PAYLOAD_KEY);
+    const timeString = localStorage.getItem(this.LAST_BACKUP_TIME_KEY);
+    if (payload === null || timeString === null) return null;
+
+    let count: number;
+    try {
+      const parsed = JSON.parse(payload);
+      count = Array.isArray(parsed) ? parsed.length : 0;
+    } catch {
+      return null;
+    }
+
+    const time = new Date(timeString);
+    return isNaN(time.getTime()) ? null : { count, time };
   },
 
   /** One hourly check: ping → once-per-day guard → change check → send all. */
