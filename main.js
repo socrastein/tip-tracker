@@ -13,6 +13,7 @@ import Stats from "/src/pages/Stats.vue";
 import { TipRepository } from "./src/scripts/TipRepository";
 import { TipStore } from "./src/scripts/TipStore";
 import { TipGrouper } from "./src/scripts/TipGrouper";
+import { BackupService } from "./src/scripts/BackupService";
 
 import { setThemeColorFromLocalStorage } from "./src/scripts/ColorTheme";
 setThemeColorFromLocalStorage();
@@ -47,3 +48,7 @@ app.use(router);
 
 // Mount the app
 app.mount("#app");
+
+// Back up tips to the home server once an hour. Only sends when on the home
+// network, no backup was created today, and the tips changed since the last save.
+BackupService.start();
