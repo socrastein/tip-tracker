@@ -10,6 +10,9 @@
   --surfaceDeep:  light-dark(var(--bgBase), #0e1113);      /* nav bar, add-tip form, stats headers */
   --surfacePanel: light-dark(var(--bgTop), var(--bgBase)); /* tip cards, summaries, menus, dialogs */
   --surfaceInset: var(--bgMid);                            /* bands inside deep surfaces (stats grids) */
+
+  /* Veil over the background photo: the original 60% black in dark, the page grey in light */
+  --photoOverlay: light-dark(color-mix(in srgb, var(--bgBase) 80%, transparent), rgb(0 0 0 / 0.6));
 }
 
 /* The icons are black SVGs, inverted to white in dark mode. A filter isn't a color, so

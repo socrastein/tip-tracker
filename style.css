@@ -1,7 +1,11 @@
 /* Base styles, fonts and the reset come from the style kit (src/ui/standard.css).
    This file only holds what the app does differently. */
 
+/* The background photo (set as --bgPhoto by App.vue once loaded) under a themed veil */
 body {
+  background-image:
+    linear-gradient(var(--photoOverlay), var(--photoOverlay)),
+    var(--bgPhoto, none);
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
