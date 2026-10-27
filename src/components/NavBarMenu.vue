@@ -51,7 +51,7 @@ function formatBackupTime(time) {
 
   width: min(70%, 16rem);
   padding: 1rem;
-  border: solid 1px var(--themeColor);
+  border: solid 1px var(--accentFull);
   border-radius: 0.5rem;
 
   background: var(--surfacePanel);
@@ -67,7 +67,7 @@ function formatBackupTime(time) {
   width: 8rem;
   height: 2rem;
   padding: 0;
-  border: solid 1px var(--themeColor);
+  border: solid 1px var(--accentFull);
   border-radius: 0.5rem;
   background-color: var(--surfacePanel);
   font-weight: bold;
@@ -81,8 +81,7 @@ function formatBackupTime(time) {
   margin-top: 0.5rem;
 
   font-size: 0.75rem;
-  color: var(--themeColor);
-  opacity: 0.65;
+  color: var(--textMuted);
   text-align: center;
 }
 </style>

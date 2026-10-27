@@ -293,7 +293,7 @@ h2 {
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
-  border: solid var(--themeColor) 1px;
+  border: solid var(--accentFull) 1px;
   border-radius: 1rem;
   padding: 1rem;
   background-color: var(--surfaceDeep);
@@ -302,7 +302,7 @@ h2 {
 }
 
 input {
-  border: solid var(--themeColor) 1px;
+  border: solid var(--accentFull) 1px;
   border-radius: 0.5rem;
   background-color: var(--surfacePanel);
   padding: 0.25rem;
@@ -310,8 +310,8 @@ input {
 }
 
 input:checked {
-  accent-color: var(--themeColor);
-  box-shadow: 0 0 8px 2px var(--themeColor);
+  accent-color: var(--accentFull);
+  box-shadow: 0 0 8px 2px var(--accentFull);
 }
 
 input[type="date"] {
@@ -348,7 +348,7 @@ input[type="date"] {
 
 #newTipAmount:focus,
 #newTipDate:focus {
-  outline: solid 3px var(--themeColor);
+  outline: solid 3px var(--accentFull);
 }
 
 .radioInput {
@@ -386,7 +386,8 @@ button {
 }
 
 .confirm {
-  background-color: var(--themeColor);
+  background-color: var(--accentFull);
+  color: var(--onAccent);
   font-weight: bold;
 }
 

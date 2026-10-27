@@ -48,7 +48,7 @@ const emit = defineEmits(["toggle"]); // parent handles the toggle code
   display: block;
   height: 3px;
   width: 100%;
-  background: var(--themeColor);
+  background: var(--accentFull);
   border-radius: 2px;
   transition: transform 0.3s, opacity 0.3s ease;
 }

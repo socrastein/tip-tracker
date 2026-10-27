@@ -1,8 +1,0 @@
-/* Temporary: the app's old accent variable. The accent picker still sets --themeColor;
-   it moves to the kit's --accentFull tokens next, and this file goes away. */
-:root,
-[data-theme],
-.light,
-.dark {
-  --themeColor: #378e3c;
-}

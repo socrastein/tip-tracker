@@ -64,7 +64,7 @@ onMounted(() => {
 
 <style scoped>
 h1 {
-  color: var(--themeColor);
+  color: var(--accentFull);
   background-color: var(--surfaceInset);
   padding: 0 1rem;
   border-radius: 0.5rem;
@@ -88,7 +88,7 @@ h3 {
   gap: 1rem;
 
   width: 100%;
-  border: solid 2px var(--themeColor);
+  border: solid 2px var(--accentFull);
   border-radius: 1rem;
   padding: 1rem 1.5rem;
 

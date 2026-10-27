@@ -1,81 +1,63 @@
 <script setup>
-import { ref } from "vue";
+// "Color Theme" button in the nav menu: opens a list of accent colors to pick from.
+// The list is a radio group, so it works with a keyboard (arrow keys) and screen readers,
+// and each color shows its name as well as its swatch.
+import { ref, watch } from "vue";
 import { onClickOutside } from "@vueuse/core";
-
-const themeColors = [
-  {
-    text: "Green",
-    color: "#378e3c",
-  },
-  {
-    text: "Blue",
-    color: "#646cff",
-  },
-  {
-    text: "Purple",
-    color: "#6c5a91",
-  },
-  {
-    text: "Magenta",
-    color: "#900090",
-  },
-  {
-    text: "Pink",
-    color: "#8f5173",
-  },
-  {
-    text: "Orange",
-    color: "#b7613f",
-  },
-  {
-    text: "Yellow",
-    color: "#c8ac69",
-  },
-
-];
+import { ACCENTS, applyAccent, loadAccentId, saveAccentId } from "../scripts/ColorTheme";
 
 const isOpen = ref(false);
 const menuRef = ref(null);
+const toggleButtonRef = ref(null);
 
-// Load saved theme (or default to first option)
-const currentTheme =
-  ref(localStorage.getItem("tipTracker(themeColor)")) || themeColors[0];
+// The saved choice (main.js already applied it at startup)
+const selectedId = ref(loadAccentId());
 
-// Close menu when clicking outside
+// Picking a color applies and saves it immediately
+watch(selectedId, (id) => {
+  applyAccent(id);
+  saveAccentId(id);
+});
+
+// Close when clicking outside, or with Escape (returning focus to the button)
 onClickOutside(menuRef, () => (isOpen.value = false));
-
-function saveThemeColorToLocalStorage(color) {
-  localStorage.setItem("tipTracker(themeColor)", color);
+function closeWithKeyboard() {
+  isOpen.value = false;
+  toggleButtonRef.value?.focus();
 }
 
-function changeColor(color) {
-  document.documentElement.style.setProperty("--themeColor", color);
-  currentTheme.value = color;
-  saveThemeColorToLocalStorage(color);
+/** Each swatch shows the color for whichever mode is showing. */
+function swatchStyle(option) {
+  return { "--swatch": `light-dark(${option.light}, ${option.dark})` };
 }
 </script>
 
 <template>
-  <div class="relative" ref="menuRef">
-    <button @click="isOpen = !isOpen" class="colorButton">Color Theme</button>
+  <div class="relative" ref="menuRef" @keydown.esc="closeWithKeyboard">
+    <button
+      ref="toggleButtonRef"
+      type="button"
+      class="colorButton"
+      :aria-expanded="isOpen"
+      aria-controls="accentChoices"
+      @click="isOpen = !isOpen"
+    >
+      Color Theme
+    </button>
 
-    <ul v-if="isOpen" class="dropdownMenu">
-      <li
-        v-for="(option, index) in themeColors"
-        :key="index"
-        @click="
-          () => {
-            changeColor(option.color);
-          }
-        "
-        :class="{ highlight: option.color === currentTheme }"
+    <fieldset v-if="isOpen" id="accentChoices" class="accentChoices">
+      <legend class="srOnly">Accent color</legend>
+      <label
+        v-for="option in ACCENTS"
+        :key="option.id"
+        class="accentOption"
+        :class="{ isSelected: option.id === selectedId }"
       >
-        <div
-          class="colorPreview"
-          :style="{ backgroundColor: option.color }"
-        ></div>
-      </li>
-    </ul>
+        <input v-model="selectedId" type="radio" name="accentColor" class="srOnly" :value="option.id" />
+        <span>{{ option.label }}</span>
+        <span class="swatch" :style="swatchStyle(option)" aria-hidden="true"></span>
+      </label>
+    </fieldset>
   </div>
 </template>
 
@@ -92,43 +74,62 @@ function changeColor(color) {
   height: 2rem;
   padding: 0;
   border-radius: 0.5rem;
-  background-color: var(--themeColor);
+  background-color: var(--accentFull);
+  color: var(--onAccent);
   font-weight: bold;
 }
 
-.dropdownMenu {
+/* The open list: a small floating panel under the button */
+.accentChoices {
   position: absolute;
   top: 110%;
   right: 0;
-  background: var(--surfacePanel);
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 5px 0;
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 50;
+  display: grid;
+  gap: 2px;
   width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0.25rem;
+  border: 1px solid var(--borderMuted);
+  border-radius: 0.5rem;
+  background: var(--surfacePanel);
+  box-shadow: var(--shadowFloat);
 }
-.dropdownMenu li {
+
+/* One row: name on the left, swatch on the right */
+.accentOption {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 2rem;
-  padding: 8px 12px;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
   cursor: pointer;
-  z-index: 50;
+}
+.accentOption:hover {
+  background-color: color-mix(in srgb, var(--textFull) 8%, transparent);
 }
 
-.highlight {
-  background-image: linear-gradient(
-    to right,
-    rgba(255, 255, 255, 0.2),
-    rgba(255, 255, 255, 0)
-  );
+/* The chosen color: bold and tinted, so it doesn't rely on the swatch alone */
+.accentOption.isSelected {
+  background-color: color-mix(in srgb, var(--textFull) 14%, transparent);
+  font-weight: bold;
 }
 
-.colorPreview {
-  height: 1.5rem;
-  width: 100%;
+/* The radio input is visually hidden, so show its keyboard focus on the row */
+.accentOption:has(input:focus-visible) {
+  outline: 2px solid var(--accentFull);
+  outline-offset: 1px;
+}
+
+.swatch {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1rem;
+  border: 1px solid var(--borderSubtle);
   border-radius: 0.25rem;
-  border: 1px solid #00000040;
+  background-color: var(--swatch);
 }
 </style>

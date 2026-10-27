@@ -74,10 +74,10 @@ watch(
 
   background-color: var(--surfacePanel);
   border-radius: 0.75rem;
-  border-top: 1px solid var(--themeColor);
-  border-right: 2px solid var(--themeColor);
-  border-left: 2px solid var(--themeColor);
-  border-bottom: 8px solid var(--themeColor);
+  border-top: 1px solid var(--accentFull);
+  border-right: 2px solid var(--accentFull);
+  border-left: 2px solid var(--accentFull);
+  border-bottom: 8px solid var(--accentFull);
 }
 
 .iconContainer:hover {

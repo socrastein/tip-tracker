@@ -73,7 +73,7 @@ onMounted(() => {
   gap: 1rem;
 
   width: 100%;
-  border: solid 2px var(--themeColor);
+  border: solid 2px var(--accentFull);
   border-radius: 1rem;
   padding: 1rem 2rem;
 
@@ -81,7 +81,7 @@ onMounted(() => {
 }
 
 h2 {
-  color: var(--themeColor);
+  color: var(--accentFull);
 }
 
 .totals,

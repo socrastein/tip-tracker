@@ -68,6 +68,6 @@ h2 {
 }
 
 .highlight {
-  border: solid 2px var(--themeColor);
+  border: solid 2px var(--accentFull);
 }
 </style>
