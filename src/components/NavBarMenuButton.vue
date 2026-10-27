@@ -8,10 +8,15 @@ const emit = defineEmits(["toggle"]); // parent handles the toggle code
 </script>
 
 <template>
-  <button class="navBarMenuButton" @click="() => {
+  <button
+    type="button"
+    class="navBarMenuButton"
+    :aria-label="isOpen ? 'Close menu' : 'Open menu'"
+    :aria-expanded="isOpen"
+    @click="() => {
     $emit('toggle')
   }">
-    <div class="hamburger" :class="{ open: isOpen }">
+    <div class="hamburger" :class="{ open: isOpen }" aria-hidden="true">
       <span></span>
       <span></span>
       <span></span>

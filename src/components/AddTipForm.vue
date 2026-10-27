@@ -157,12 +157,15 @@ watch(
       @close="showError = false"
     />
     <h2>{{ props.isBeingEdited ? "Edit Tip:" : "New Tip:" }}</h2>
-    <img
+    <button
       v-if="isBeingEdited"
+      type="button"
       class="delete"
+      aria-label="Delete tip"
       @click="deleteTip"
-      :src="closeIcon"
-    />
+    >
+      <img :src="closeIcon" alt="" />
+    </button>
 
     <div class="amountInputWrapper">
       <input
@@ -171,10 +174,11 @@ watch(
         type="number"
         id="newTipAmount"
         inputmode="numeric"
+        aria-label="Tip amount in dollars"
       />
     </div>
 
-    <input v-model="inputDate" type="date" id="newTipDate" />
+    <input v-model="inputDate" type="date" id="newTipDate" aria-label="Date of the shift" />
 
     <div class="radioInput">
       <div class="radioOptionContainer">
@@ -396,10 +400,17 @@ button {
   right: 1rem;
   height: 2.25rem;
   width: 2.25rem;
+  /* A bare icon: not the panel-colored box the form's other buttons get */
+  padding: 0;
+  background: transparent;
 
   cursor: pointer;
 
   filter: brightness(0) saturate(100%) invert(14%) sepia(90%) saturate(3720%)
     hue-rotate(346deg) brightness(90%) contrast(92%);
+}
+.delete img {
+  width: 100%;
+  height: 100%;
 }
 </style>

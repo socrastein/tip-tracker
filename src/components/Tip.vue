@@ -55,9 +55,15 @@ const props = defineProps({
         <p>{{ shift }}</p>
       </div>
     </div>
-    <div class="editButton" v-if="showEdit" @click="handleEditClick">
-      <img class="editIcon" :src="editIcon" />
-    </div>
+    <button
+      type="button"
+      class="editButton"
+      aria-label="Edit tip"
+      v-if="showEdit"
+      @click="handleEditClick"
+    >
+      <img class="editIcon" :src="editIcon" alt="" />
+    </button>
   </div>
 </template>
 

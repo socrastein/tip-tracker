@@ -25,8 +25,10 @@ watch(
 
 <template>
   <div class="addTipContainer">
-    <div
+    <button
+      type="button"
       class="iconContainer"
+      aria-label="Add a tip"
       v-if="!showForm"
       @click="
         () => {
@@ -35,8 +37,8 @@ watch(
         }
       "
     >
-      <img class="icon" :src="addIcon" />
-    </div>
+      <img class="icon" :src="addIcon" alt="" />
+    </button>
     <transition
       name="slide-down"
       @after-enter="onFormVisible"
