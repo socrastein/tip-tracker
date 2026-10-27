@@ -25,8 +25,10 @@ watch(
 
 <template>
   <div class="addTipContainer">
-    <div
+    <button
+      type="button"
       class="iconContainer"
+      aria-label="Add a tip"
       v-if="!showForm"
       @click="
         () => {
@@ -35,8 +37,8 @@ watch(
         }
       "
     >
-      <img class="icon" :src="addIcon" />
-    </div>
+      <img class="icon" :src="addIcon" alt="" />
+    </button>
     <transition
       name="slide-down"
       @after-enter="onFormVisible"
@@ -72,12 +74,12 @@ watch(
   height: 4rem;
   width: 10rem;
 
-  background-color: var(--backgroundDark);
+  background-color: var(--surfacePanel);
   border-radius: 0.75rem;
-  border-top: 1px solid var(--themeColor);
-  border-right: 2px solid var(--themeColor);
-  border-left: 2px solid var(--themeColor);
-  border-bottom: 8px solid var(--themeColor);
+  border-top: 1px solid var(--accentFull);
+  border-right: 2px solid var(--accentFull);
+  border-left: 2px solid var(--accentFull);
+  border-bottom: 8px solid var(--accentFull);
 }
 
 .iconContainer:hover {
@@ -86,6 +88,6 @@ watch(
 
 .icon {
   height: 100%;
-  filter: invert(100%);
+  filter: invert(var(--iconInvert));
 }
 </style>

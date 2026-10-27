@@ -62,7 +62,7 @@ function removeBackgroundBlur() {
   align-items: center;
   gap: 0.5rem;
   padding: 10px 3%;
-  background-color: var(--backgroundBlack);
+  background-color: var(--surfaceDeep);
 }
 
 .appTitle:hover {

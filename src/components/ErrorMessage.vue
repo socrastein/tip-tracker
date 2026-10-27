@@ -39,14 +39,14 @@ if (props.duration > 0) {
   width: min(80%, 24rem);
   padding: 1rem 1rem;
 
-  border: 2px solid white;
+  border: 2px solid var(--onDanger);
   border-radius: 0.5rem;
   
   text-align: center;
   font-weight: bold;
   font-size: 1.1rem;
-  color: white;
-  background-color: darkred;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  color: var(--onDanger);
+  background-color: var(--danger);
+  box-shadow: var(--shadowFloat);
 }
 </style>

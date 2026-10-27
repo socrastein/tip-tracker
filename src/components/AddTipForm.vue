@@ -157,12 +157,15 @@ watch(
       @close="showError = false"
     />
     <h2>{{ props.isBeingEdited ? "Edit Tip:" : "New Tip:" }}</h2>
-    <img
+    <button
       v-if="isBeingEdited"
+      type="button"
       class="delete"
+      aria-label="Delete tip"
       @click="deleteTip"
-      :src="closeIcon"
-    />
+    >
+      <img :src="closeIcon" alt="" />
+    </button>
 
     <div class="amountInputWrapper">
       <input
@@ -171,10 +174,11 @@ watch(
         type="number"
         id="newTipAmount"
         inputmode="numeric"
+        aria-label="Tip amount in dollars"
       />
     </div>
 
-    <input v-model="inputDate" type="date" id="newTipDate" />
+    <input v-model="inputDate" type="date" id="newTipDate" aria-label="Date of the shift" />
 
     <div class="radioInput">
       <div class="radioOptionContainer">
@@ -293,25 +297,25 @@ h2 {
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
-  border: solid var(--themeColor) 1px;
+  border: solid var(--accentFull) 1px;
   border-radius: 1rem;
   padding: 1rem;
-  background-color: var(--backgroundBlack);
+  background-color: var(--surfaceDeep);
   height: 24rem;
   width: min(90%, 22rem);
 }
 
 input {
-  border: solid var(--themeColor) 1px;
+  border: solid var(--accentFull) 1px;
   border-radius: 0.5rem;
-  background-color: var(--backgroundDark);
+  background-color: var(--surfacePanel);
   padding: 0.25rem;
   box-sizing: inherit;
 }
 
 input:checked {
-  accent-color: var(--themeColor);
-  box-shadow: 0 0 8px 2px var(--themeColor);
+  accent-color: var(--accentFull);
+  box-shadow: 0 0 8px 2px var(--accentFull);
 }
 
 input[type="date"] {
@@ -348,7 +352,7 @@ input[type="date"] {
 
 #newTipAmount:focus,
 #newTipDate:focus {
-  outline: solid 3px var(--themeColor);
+  outline: solid 3px var(--accentFull);
 }
 
 .radioInput {
@@ -365,10 +369,6 @@ input[type="date"] {
   gap: 0.5rem;
 }
 
-hr {
-  color: var(--themeColor);
-}
-
 .confirmationContainer {
   display: flex;
   justify-content: space-between;
@@ -376,7 +376,7 @@ hr {
 }
 
 button {
-  background-color: var(--backgroundDark);
+  background-color: var(--surfacePanel);
   border: none;
   border-radius: 0.5rem;
   padding: 0.25rem 0.5rem;
@@ -384,12 +384,14 @@ button {
 }
 
 .cancel {
-  background-color: darkred;
+  background-color: var(--danger);
+  color: var(--onDanger);
   font-size: 0.8rem;
 }
 
 .confirm {
-  background-color: var(--themeColor);
+  background-color: var(--accentFull);
+  color: var(--onAccent);
   font-weight: bold;
 }
 
@@ -398,10 +400,17 @@ button {
   right: 1rem;
   height: 2.25rem;
   width: 2.25rem;
+  /* A bare icon: not the panel-colored box the form's other buttons get */
+  padding: 0;
+  background: transparent;
 
   cursor: pointer;
 
   filter: brightness(0) saturate(100%) invert(14%) sepia(90%) saturate(3720%)
     hue-rotate(346deg) brightness(90%) contrast(92%);
+}
+.delete img {
+  width: 100%;
+  height: 100%;
 }
 </style>

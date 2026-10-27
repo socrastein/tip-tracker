@@ -1,0 +1,25 @@
+/* Tip Tracker's own tokens, built on the style kit's (src/ui/standard.css).
+   Dark values match the app's original dark theme; light values follow the kit's Braun look. */
+
+/* Declared on every themed element too, like the kit's tokens, so a themed section picks them up. */
+:root,
+[data-theme],
+.light,
+.dark {
+  /* Surfaces, from the deepest up */
+  --surfaceDeep:  light-dark(var(--bgBase), #0e1113);      /* nav bar, add-tip form, stats headers */
+  --surfacePanel: light-dark(var(--bgTop), var(--bgBase)); /* tip cards, summaries, menus, dialogs */
+  --surfaceInset: var(--bgMid);                            /* bands inside deep surfaces (stats grids) */
+
+  /* Veil over the background photo: the original 60% black in dark, the page grey in light */
+  --photoOverlay: light-dark(color-mix(in srgb, var(--bgBase) 80%, transparent), rgb(0 0 0 / 0.6));
+}
+
+/* The icons are black SVGs, inverted to white in dark mode. A filter isn't a color, so
+   light-dark() can't pick it; these selectors mirror how the theme resolves instead
+   (saved choice on <html>, otherwise the OS setting). */
+:root { --iconInvert: 100%; }
+:root[data-theme="light"] { --iconInvert: 0%; }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) { --iconInvert: 0%; }
+}

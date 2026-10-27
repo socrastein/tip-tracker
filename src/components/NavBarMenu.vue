@@ -1,6 +1,7 @@
 <script setup>
 import { RouterLink } from "vue-router";
 import ColorThemeMenu from "../components/ColorThemeMenu.vue";
+import ThemeToggle from "../ui/ThemeToggle.vue";
 import { BackupService } from "../scripts/BackupService";
 
 const emit = defineEmits(["close"]);
@@ -19,13 +20,14 @@ function formatBackupTime(time) {
 <template>
   <transition name="fade-slide" appear>
     <div class="menuContainer">
-      <router-link class="menuItem" to="/" @click="() => $emit('close')"
+      <router-link class="navLink" to="/" @click="() => $emit('close')"
         >Home</router-link
       >
-      <router-link class="menuItem" to="/stats" @click="() => $emit('close')"
+      <router-link class="navLink" to="/stats" @click="() => $emit('close')"
         >Stats Page</router-link
       >
       <ColorThemeMenu />
+      <ThemeToggle />
       <div v-if="lastBackup" class="lastSaved">
         <span>Last saved: {{ lastBackup.count }} tips</span>
         <span>{{ formatBackupTime(lastBackup.time) }}</span>
@@ -49,24 +51,25 @@ function formatBackupTime(time) {
 
   width: min(70%, 16rem);
   padding: 1rem;
-  border: solid 1px var(--themeColor);
+  border: solid 1px var(--accentFull);
   border-radius: 0.5rem;
 
-  background: var(--backgroundDark);
+  background: var(--surfacePanel);
 
   z-index: 1000;
 }
 
-.menuItem {
+/* Not "menuItem": the style kit already has a .menuItem class */
+.navLink {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 8rem;
   height: 2rem;
   padding: 0;
-  border: solid 1px var(--themeColor);
+  border: solid 1px var(--accentFull);
   border-radius: 0.5rem;
-  background-color: var(--backgroundDark);
+  background-color: var(--surfacePanel);
   font-weight: bold;
 }
 
@@ -78,8 +81,7 @@ function formatBackupTime(time) {
   margin-top: 0.5rem;
 
   font-size: 0.75rem;
-  color: var(--themeColor);
-  opacity: 0.65;
+  color: var(--textMuted);
   text-align: center;
 }
 </style>

@@ -1,3 +1,6 @@
+// The style kit first, so the app's own styles can build on and override it.
+import "./src/ui/standard.css";
+import "./src/styles/tokens.css";
 import "./style.css";
 import "./polish.css";
 
@@ -15,8 +18,9 @@ import { TipStore } from "./src/scripts/TipStore";
 import { TipGrouper } from "./src/scripts/TipGrouper";
 import { BackupService } from "./src/scripts/BackupService";
 
-import { setThemeColorFromLocalStorage } from "./src/scripts/ColorTheme";
-setThemeColorFromLocalStorage();
+// Apply the saved accent color before the first render
+import { applySavedAccent } from "./src/scripts/ColorTheme";
+applySavedAccent();
 
 // Load tips from localStorage, sort by date, then load into allTips
 const loadedTips = TipRepository.loadAllFromStorage();

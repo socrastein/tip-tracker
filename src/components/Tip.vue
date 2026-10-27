@@ -55,9 +55,15 @@ const props = defineProps({
         <p>{{ shift }}</p>
       </div>
     </div>
-    <div class="editButton" v-if="showEdit" @click="handleEditClick">
-      <img class="editIcon" :src="editIcon" />
-    </div>
+    <button
+      type="button"
+      class="editButton"
+      aria-label="Edit tip"
+      v-if="showEdit"
+      @click="handleEditClick"
+    >
+      <img class="editIcon" :src="editIcon" alt="" />
+    </button>
   </div>
 </template>
 
@@ -78,10 +84,10 @@ const props = defineProps({
   padding: 0.5rem 1rem;
   height: 100%;
   width: 100%;
-  border-left: 1px solid var(--themeColor);
-  border-bottom: 2px solid var(--themeColor);
+  border-left: 1px solid var(--accentFull);
+  border-bottom: 2px solid var(--accentFull);
   border-radius: 1rem;
-  background-color: var(--backgroundDark);
+  background-color: var(--surfacePanel);
 
   transition: width 0.3s linear;
 }
@@ -99,8 +105,7 @@ const props = defineProps({
 }
 
 .amount {
-  color: var(--themeColor);
-  filter: brightness(110%);
+  color: var(--accentFull);
   font-weight: bold;
   font-size: 1.75rem;
 }
@@ -128,13 +133,15 @@ const props = defineProps({
   height: 100%;
   width: 4rem;
   border-radius: 0 0.5rem 0.5rem 0;
-  background-color: var(--themeColor);
+  background-color: var(--accentFull);
+  color: var(--onAccent);
 
   cursor: pointer;
 }
 
 .editIcon {
-  filter: invert(100%);
+  /* Matches the button text: the opposite of the icons on surfaces */
+  filter: invert(calc(100% - var(--iconInvert)));
   height: 2rem;
   width: 2rem;
 }
