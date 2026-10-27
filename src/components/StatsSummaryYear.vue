@@ -73,15 +73,15 @@ onMounted(() => {
   gap: 1rem;
 
   width: 100%;
-  border: solid 2px var(--accentFull);
+  border: solid 2px var(--themeColor);
   border-radius: 1rem;
   padding: 1rem 2rem;
 
-  background-color: var(--surfaceDeep);
+  background-color: var(--backgroundBlack);
 }
 
 h2 {
-  color: var(--accentFull);
+  color: var(--themeColor);
 }
 
 .totals,

@@ -77,7 +77,7 @@ const periodLabel = computed(() => {
   width: 100%;
   border-radius: 1rem;
   padding: 0.5rem 1rem;
-  background-color: var(--surfacePanel);
+  background-color: var(--backgroundDark);
 }
 
 .payPeriodHeader {
@@ -96,6 +96,7 @@ const periodLabel = computed(() => {
 
 hr {
   width: 80%;
+  color: var(--themeColor);
 }
 
 .numbersContainer {

@@ -48,15 +48,15 @@ const show = ref(true);
   width: 100%;
   padding: 1rem 1rem;
 
-  border: 2px solid var(--borderFull);
+  border: 2px solid white;
   border-radius: 0.5rem;
 
   text-align: center;
   font-weight: bold;
   font-size: 1.1rem;
-  color: var(--textFull);
-  background-color: var(--surfacePanel);
-  box-shadow: var(--shadowFloat);
+  color: white;
+  background-color: var(--backgroundDark);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .confirmMessage {
@@ -70,7 +70,7 @@ const show = ref(true);
 }
 
 button {
-  background-color: var(--surfacePanel);
+  background-color: var(--backgroundDark);
   border: none;
   border-radius: 0.5rem;
   padding: 0.25rem 0.5rem;
@@ -80,14 +80,12 @@ button {
   cursor: pointer;
 }
 
-/* Neutral, set apart by tone (the kit's secondary-button pattern) */
 .cancel {
-  background-color: color-mix(in srgb, var(--textFull) 15%, var(--surfacePanel));
+  background-color: grey;
   font-weight: bold;
 }
 
 .confirm {
-  background-color: var(--danger);
-  color: var(--onDanger);
+  background-color: darkred;
 }
 </style>

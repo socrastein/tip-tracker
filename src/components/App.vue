@@ -14,8 +14,8 @@ onMounted(() => {
   const img = new Image();
   img.src = background;
   img.onload = () => {
-    // Hand the photo to CSS (style.css paints it under a veil that follows the theme)
-    document.body.style.setProperty("--bgPhoto", `url('${background}')`);
+    // Set body background with dark overlay
+    document.body.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),url('${background}')`;
     isReady.value = true;
   };
 });
