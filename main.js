@@ -51,4 +51,8 @@ app.mount("#app");
 
 // Back up tips to the home server once an hour. Only sends when on the home
 // network, no backup was created today, and the tips changed since the last save.
-BackupService.start();
+//
+// Only from the deployed app: each backup becomes the newest archive on the home server (the
+// one the app restores from), so a dev or test copy on the LAN must never send its tips.
+const isDeployedApp = window.location.hostname === "socrastein.github.io";
+if (isDeployedApp) BackupService.start();
