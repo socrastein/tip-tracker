@@ -20,10 +20,10 @@ function formatBackupTime(time) {
 <template>
   <transition name="fade-slide" appear>
     <div class="menuContainer">
-      <router-link class="menuItem" to="/" @click="() => $emit('close')"
+      <router-link class="navLink" to="/" @click="() => $emit('close')"
         >Home</router-link
       >
-      <router-link class="menuItem" to="/stats" @click="() => $emit('close')"
+      <router-link class="navLink" to="/stats" @click="() => $emit('close')"
         >Stats Page</router-link
       >
       <ColorThemeMenu />
@@ -54,12 +54,13 @@ function formatBackupTime(time) {
   border: solid 1px var(--themeColor);
   border-radius: 0.5rem;
 
-  background: var(--backgroundDark);
+  background: var(--surfacePanel);
 
   z-index: 1000;
 }
 
-.menuItem {
+/* Not "menuItem": the style kit already has a .menuItem class */
+.navLink {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -68,7 +69,7 @@ function formatBackupTime(time) {
   padding: 0;
   border: solid 1px var(--themeColor);
   border-radius: 0.5rem;
-  background-color: var(--backgroundDark);
+  background-color: var(--surfacePanel);
   font-weight: bold;
 }
 

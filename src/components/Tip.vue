@@ -81,7 +81,7 @@ const props = defineProps({
   border-left: 1px solid var(--themeColor);
   border-bottom: 2px solid var(--themeColor);
   border-radius: 1rem;
-  background-color: var(--backgroundDark);
+  background-color: var(--surfacePanel);
 
   transition: width 0.3s linear;
 }

@@ -72,7 +72,7 @@ watch(
   height: 4rem;
   width: 10rem;
 
-  background-color: var(--backgroundDark);
+  background-color: var(--surfacePanel);
   border-radius: 0.75rem;
   border-top: 1px solid var(--themeColor);
   border-right: 2px solid var(--themeColor);
@@ -86,6 +86,6 @@ watch(
 
 .icon {
   height: 100%;
-  filter: invert(100%);
+  filter: invert(var(--iconInvert));
 }
 </style>

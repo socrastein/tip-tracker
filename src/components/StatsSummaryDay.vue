@@ -65,7 +65,7 @@ onMounted(() => {
 <style scoped>
 h1 {
   color: var(--themeColor);
-  background-color: var(--backgroundLight);
+  background-color: var(--surfaceInset);
   padding: 0 1rem;
   border-radius: 0.5rem;
 }
@@ -92,7 +92,7 @@ h3 {
   border-radius: 1rem;
   padding: 1rem 1.5rem;
 
-  background-color: var(--backgroundBlack);
+  background-color: var(--surfaceDeep);
 }
 
 .monthSummary {
@@ -123,7 +123,7 @@ h3 {
 }
 
 .gridLabels {
-  background-color: var(--backgroundLight);
+  background-color: var(--surfaceInset);
   border-radius: 0.5rem 0.5rem 0 0;
   font-size: 0.9rem;
   font-weight: bold;

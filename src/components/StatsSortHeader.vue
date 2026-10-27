@@ -46,7 +46,7 @@ const emit = defineEmits(["year", "month", "day"]);
 h2 {
   width: 80%;
   padding: 0.5rem;
-  background-color: var(--backgroundBlack);
+  background-color: var(--surfaceDeep);
   border-radius: 0.5rem;
 
   text-align: center;
@@ -59,7 +59,7 @@ h2 {
 }
 
 .sortButton {
-  background-color: var(--backgroundBlack);
+  background-color: var(--surfaceDeep);
   padding: 0.5rem;
   border-radius: 0.5rem;
   font-weight: bold;

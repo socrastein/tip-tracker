@@ -296,7 +296,7 @@ h2 {
   border: solid var(--themeColor) 1px;
   border-radius: 1rem;
   padding: 1rem;
-  background-color: var(--backgroundBlack);
+  background-color: var(--surfaceDeep);
   height: 24rem;
   width: min(90%, 22rem);
 }
@@ -304,7 +304,7 @@ h2 {
 input {
   border: solid var(--themeColor) 1px;
   border-radius: 0.5rem;
-  background-color: var(--backgroundDark);
+  background-color: var(--surfacePanel);
   padding: 0.25rem;
   box-sizing: inherit;
 }
@@ -365,10 +365,6 @@ input[type="date"] {
   gap: 0.5rem;
 }
 
-hr {
-  color: var(--themeColor);
-}
-
 .confirmationContainer {
   display: flex;
   justify-content: space-between;
@@ -376,7 +372,7 @@ hr {
 }
 
 button {
-  background-color: var(--backgroundDark);
+  background-color: var(--surfacePanel);
   border: none;
   border-radius: 0.5rem;
   padding: 0.25rem 0.5rem;
@@ -384,7 +380,8 @@ button {
 }
 
 .cancel {
-  background-color: darkred;
+  background-color: var(--danger);
+  color: var(--onDanger);
   font-size: 0.8rem;
 }
 

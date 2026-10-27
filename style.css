@@ -14,7 +14,6 @@ body {
 /* The app's layouts assume no default padding anywhere (the kit only resets margins) */
 * {
   padding: 0;
-  color: var(--font);
 
   transition: background-color 0.3s ease, color 0.3s ease,
     border-color 0.3s ease;
@@ -36,10 +35,20 @@ ol {
   list-style: none;
 }
 
+/* A thin rule in the accent color, with no margins: layouts space it themselves */
 hr {
   width: 100%;
-  color: var(--themeColor);
+  margin-block: 0;
+  border: 0;
+  border-top: 1px solid var(--themeColor);
 }
+
+/* Headings sized for a phone screen: the kit's scale is meant for full pages, and some
+   layouts here have fixed heights (the add-tip form). em, so a heading scales with its box. */
+h1 { font-size: 2em; }
+h2 { font-size: 1.5em; }
+h3 { font-size: 1.17em; }
+:is(h1, h2, h3) { letter-spacing: normal; }
 
 button {
   border: none;

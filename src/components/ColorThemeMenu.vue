@@ -100,7 +100,7 @@ function changeColor(color) {
   position: absolute;
   top: 110%;
   right: 0;
-  background: var(--backgroundDark);
+  background: var(--surfacePanel);
   border: 1px solid #ddd;
   border-radius: 5px;
   padding: 5px 0;

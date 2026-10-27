@@ -77,7 +77,7 @@ onMounted(() => {
   border-radius: 1rem;
   padding: 1rem 2rem;
 
-  background-color: var(--backgroundBlack);
+  background-color: var(--surfaceDeep);
 }
 
 h2 {
