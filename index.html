@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<!-- Style kit settings: dark until the user picks a theme; saved keys get a "tipTracker." prefix -->
+<html lang="en" data-default-theme="dark" data-storage-prefix="tipTracker">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,9 +11,9 @@
     />
     <script type="module" src="./main.js"></script>
   </head>
-  <!-- Dark background color coded into body to prevent
-   white flash on page reload -->
-  <body style="background-color: #222222">
+  <!-- No inline background needed: the build links the stylesheet in <head>, and
+   themeBootPlugin (vite.config.js) applies the saved theme before first paint. -->
+  <body>
     <div id="app">
       <!-- Vue app will be mounted here -->
     </div>

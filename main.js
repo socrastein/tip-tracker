@@ -4,6 +4,10 @@ import "./src/styles/legacy.css";
 import "./style.css";
 import "./polish.css";
 
+// Keeps the light-mode look (Braun) applied when the theme changes while the app runs.
+// ThemeToggle only loads the theme state, so the look state has to be loaded explicitly.
+import "./src/ui/useLook.js";
+
 import { createApp } from "vue";
 import { createRouter, createWebHistory } from "vue-router";
 

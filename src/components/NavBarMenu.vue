@@ -1,6 +1,7 @@
 <script setup>
 import { RouterLink } from "vue-router";
 import ColorThemeMenu from "../components/ColorThemeMenu.vue";
+import ThemeToggle from "../ui/ThemeToggle.vue";
 import { BackupService } from "../scripts/BackupService";
 
 const emit = defineEmits(["close"]);
@@ -26,6 +27,7 @@ function formatBackupTime(time) {
         >Stats Page</router-link
       >
       <ColorThemeMenu />
+      <ThemeToggle />
       <div v-if="lastBackup" class="lastSaved">
         <span>Last saved: {{ lastBackup.count }} tips</span>
         <span>{{ formatBackupTime(lastBackup.time) }}</span>
