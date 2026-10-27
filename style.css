@@ -1,27 +1,5 @@
-@font-face {
-  font-family: "Ubuntu";
-  font-weight: 300;
-  font-style: normal;
-  src: url("/src/assets/fonts/ubuntu/ubuntu-v20-latin-300.woff2")
-    format("woff2");
-}
-
-@font-face {
-  font-family: "Ubuntu";
-  font-weight: 700;
-  font-style: normal;
-  src: url("/src/assets/fonts/ubuntu/ubuntu-v20-latin-700.woff2")
-    format("woff2");
-}
-
-/* Root Variables */
-:root {
-  --themeColor: #378e3c;
-  --backgroundLight: #242424;
-  --backgroundDark: #1a1a1a;
-  --backgroundBlack: #0e1113;
-  --font: #fafafa;
-}
+/* Base styles, fonts and the reset come from the style kit (src/ui/standard.css).
+   This file only holds what the app does differently. */
 
 body {
   background-size: cover;
@@ -33,11 +11,9 @@ body {
   padding-bottom: 2rem;
 }
 
-/* Basic CSS Reset */
+/* The app's layouts assume no default padding anywhere (the kit only resets margins) */
 * {
-  margin: 0;
   padding: 0;
-  box-sizing: border-box;
   color: var(--font);
 
   transition: background-color 0.3s ease, color 0.3s ease,
@@ -48,27 +24,6 @@ html,
 body {
   width: 100%;
   height: 100%;
-}
-
-body {
-  line-height: 1.5;
-  font-family: "Ubuntu", sans-serif, Arial;
-}
-
-img,
-picture,
-video,
-canvas,
-svg {
-  display: block;
-  max-width: 100%;
-}
-
-input,
-button,
-textarea,
-select {
-  font: inherit;
 }
 
 a {
@@ -84,19 +39,6 @@ ol {
 hr {
   width: 100%;
   color: var(--themeColor);
-}
-
-/* Remove incremenet arrows on number inputs */
-/* Chrome, Safari, Edge, Opera */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-/* Firefox */
-input[type="number"] {
-  -moz-appearance: textfield;
 }
 
 button {

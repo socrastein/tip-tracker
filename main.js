@@ -1,3 +1,6 @@
+// The style kit first, so the app's own styles can build on and override it.
+import "./src/ui/standard.css";
+import "./src/styles/legacy.css";
 import "./style.css";
 import "./polish.css";
 

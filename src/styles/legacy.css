@@ -1,0 +1,32 @@
+/* Temporary compatibility layer between the app's old styles and the style kit.
+   Each block keeps components looking as they did until they are migrated to the kit's
+   tokens and typography; this whole file is deleted when nothing depends on it. */
+
+/* The old color variables, pointed at kit tokens. */
+:root,
+[data-theme],
+.light,
+.dark {
+  --themeColor: #378e3c;                  /* default accent, until the accent picker moves to --accentFull */
+  --backgroundLight: var(--bgMid);        /* #242424 in dark */
+  --backgroundDark: var(--bgBase);        /* #1a1a1a in dark */
+  --backgroundBlack: #0e1113;             /* nav bar and headers; no kit token this dark */
+  --font: var(--textFull);
+}
+
+/* Browser-default heading sizes: components were laid out around them (the add-tip form has
+   a fixed height), and the kit's larger sizes push content out. */
+h1 { font-size: 2em; }
+h2 { font-size: 1.5em; }
+h3 { font-size: 1.17em; }
+h4 { font-size: 1em; }
+h5 { font-size: 0.83em; }
+h6 { font-size: 0.67em; }
+:is(h1, h2, h3, h4, h5, h6) { letter-spacing: normal; }
+
+/* A thin rule in the accent color with no margins, as before. */
+hr {
+  margin-block: 0;
+  border: 0;
+  border-top: 1px solid var(--themeColor);
+}
