@@ -26,6 +26,9 @@ function formatBackupTime(time) {
         >Stats Page</router-link
       >
       <ColorThemeMenu />
+      <router-link class="quietLink" to="/celebration-setup" @click="() => $emit('close')"
+        >Celebration Setup</router-link
+      >
       <div v-if="lastBackup" class="lastSaved">
         <span>Last saved: {{ lastBackup.count }} tips</span>
         <span>{{ formatBackupTime(lastBackup.time) }}</span>
@@ -68,6 +71,12 @@ function formatBackupTime(time) {
   border-radius: 0.5rem;
   background-color: var(--backgroundDark);
   font-weight: bold;
+}
+
+.quietLink {
+  font-size: 0.75rem;
+  opacity: 0.55;
+  text-decoration: underline;
 }
 
 .lastSaved {

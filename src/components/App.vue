@@ -1,12 +1,19 @@
 <script setup>
 import { RouterView } from "vue-router";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, defineAsyncComponent } from "vue";
 
 import NavBar from "./NavBar.vue";
 import LoadingScreen from "./LoadingScreen.vue";
 import CelebrationOverlay from "./CelebrationOverlay.vue";
 
 import background from "../assets/photos/beachSunset.jpg";
+
+// Preview tools exist only on the local dev server: in a production build
+// import.meta.env.DEV is the constant false, so this import and the panel
+// are removed from the bundle (tests/modules/CelebrationDevBuild.test.js checks).
+const CelebrationDevPanel = import.meta.env.DEV
+  ? defineAsyncComponent(() => import("./CelebrationDevPanel.vue"))
+  : null;
 
 // Load the background image before displaying app so everything paints at once
 const isReady = ref(false);
@@ -27,6 +34,7 @@ onMounted(() => {
     <NavBar />
     <RouterView />
     <CelebrationOverlay />
+    <component :is="CelebrationDevPanel" v-if="CelebrationDevPanel" />
   </div>
   <LoadingScreen v-else />
 </template>

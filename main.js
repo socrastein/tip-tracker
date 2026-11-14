@@ -9,12 +9,14 @@ import App from "/src/components/App.vue";
 // Import components for the routes
 import Home from "/src/pages/Home.vue";
 import Stats from "/src/pages/Stats.vue";
+import CelebrationSetup from "/src/pages/CelebrationSetup.vue";
 
 import { TipRepository } from "./src/scripts/TipRepository";
 import { TipStore } from "./src/scripts/TipStore";
 import { TipGrouper } from "./src/scripts/TipGrouper";
 import { BackupService } from "./src/scripts/BackupService";
 
+import { prepareCustomCelebration } from "./src/scripts/CustomCelebrationRuntime";
 import { setThemeColorFromLocalStorage } from "./src/scripts/ColorTheme";
 setThemeColorFromLocalStorage();
 
@@ -28,10 +30,15 @@ TipStore.setAllTips(loadedTips);
 const groupedTips = TipGrouper.groupByPeriod(loadedTips);
 TipStore.setGroupedTips(groupedTips);
 
+// Get the custom celebration (if one is set up on this device) ready in the
+// background so it can start instantly later. Nothing plays here.
+prepareCustomCelebration();
+
 // Define routes
 const routes = [
   { path: "/", component: Home, name: "home" },
   { path: "/stats", component: Stats, name: "stats" },
+  { path: "/celebration-setup", component: CelebrationSetup, name: "celebrationSetup" },
 ];
 
 // Create the router instance
