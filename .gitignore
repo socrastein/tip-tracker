@@ -21,3 +21,6 @@ package-lock.json
 .idea/misc.xml
 .idea/IntelliLang.xml
 Tips JSON.txt
+# Local settings, including the celebration GIF API key (never commit a key)
+.env
+.env.*

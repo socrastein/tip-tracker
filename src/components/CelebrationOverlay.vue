@@ -44,6 +44,13 @@ const customImageUrl = computed(() =>
   current.value?.name === "custom" ? (getPreparedCustomCelebration()?.imageUrl ?? null) : null,
 );
 
+// Set when the GIF could not be drawn, which hides it and its attribution.
+const gifFailed = ref(false);
+// A GIF shows unless the owner's own picture is already taking its place.
+const showGif = computed(
+  () => Boolean(current.value?.gifUrl) && !customImageUrl.value && !gifFailed.value,
+);
+
 let stopParticles: (() => void) | null = null;
 let endTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -90,6 +97,7 @@ watch(
   () => current.value?.id,
   () => {
     cleanUp();
+    gifFailed.value = false;
     if (current.value) void begin(current.value.name);
   },
 );
@@ -123,6 +131,12 @@ onBeforeUnmount(cleanUp);
     </div>
 
     <img v-else-if="customImageUrl" :src="customImageUrl" class="customImage" alt="" />
+
+    <!-- A provider GIF; GIPHY's terms require its attribution wherever one is shown. -->
+    <div v-if="showGif" class="celebrationGif">
+      <img :src="current.gifUrl!" class="gifImage" alt="" @error="gifFailed = true" />
+      <p class="gifAttribution">Powered By GIPHY</p>
+    </div>
   </div>
 </template>
 
@@ -354,6 +368,46 @@ onBeforeUnmount(cleanUp);
   }
   100% {
     opacity: 0;
+  }
+}
+
+/* ---- Provider GIF (swaying in the middle, with its attribution) ---- */
+.celebrationGif {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  transform: translate(-50%, -50%);
+}
+
+.gifImage {
+  width: min(55vw, 13rem);
+  max-height: 32vh;
+  object-fit: contain;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.55);
+  transform-origin: 50% 100%;
+  animation: gifSway 0.8s ease-in-out infinite alternate; /* a sway every 0.8 s */
+}
+
+.gifAttribution {
+  padding: 0.1rem 0.5rem;
+  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  font-size: 0.7rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+}
+
+@keyframes gifSway {
+  from {
+    transform: rotate(-4deg);
+  }
+  to {
+    transform: rotate(4deg);
   }
 }
 

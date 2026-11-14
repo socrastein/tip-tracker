@@ -9,6 +9,7 @@ import { showCelebration } from "./CelebrationState";
 import { playCelebrationSound, unlockAudioContext } from "./CelebrationSounds";
 import { playClip } from "./CustomCelebrationAudio";
 import { getPreparedCustomCelebration } from "./CustomCelebrationRuntime";
+import { getGifPreloader } from "./GifPreloader";
 
 /**
  * Starts the celebration after a big tip has been saved. Everything here is
@@ -38,6 +39,26 @@ function rememberLastCelebration(name: CelebrationName): void {
   }
 }
 
+// The celebrations with room for a GIF swaying in the middle. The banner
+// and the jackpot reels already fill that spot, so they never show one.
+const GIF_CELEBRATIONS: CelebrationName[] = ["billsRain", "confetti", "fireworks", CUSTOM_CELEBRATION];
+
+/**
+ * The GIF to show with a celebration: the one already loaded in the
+ * background, or null (never waiting, never failing) when there is none or
+ * the celebration has no room for one. The custom celebration only takes a
+ * GIF when the owner set no picture of their own.
+ */
+function takeGifFor(name: CelebrationName): string | null {
+  try {
+    if (!GIF_CELEBRATIONS.includes(name)) return null;
+    const hasOwnPicture = name === CUSTOM_CELEBRATION && getPreparedCustomCelebration()?.imageUrl;
+    return hasOwnPicture ? null : getGifPreloader().takeReady();
+  } catch {
+    return null;
+  }
+}
+
 /** Every celebration that can play now: the built-ins, plus the custom one when set up. */
 export function availableCelebrations(): CelebrationName[] {
   const custom = getPreparedCustomCelebration() ? [CUSTOM_CELEBRATION] : [];
@@ -56,7 +77,7 @@ export function playCelebration(name: CelebrationName): void {
     // No sound (blocked or unsupported) must not cost the visuals.
     console.warn("[Celebration] Sound could not start:", error);
   }
-  showCelebration(name);
+  showCelebration(name, takeGifFor(name));
 }
 
 /** Start the sound for a celebration: the owner's clip or the synthesized score. */

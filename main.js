@@ -16,6 +16,8 @@ import { TipStore } from "./src/scripts/TipStore";
 import { TipGrouper } from "./src/scripts/TipGrouper";
 import { BackupService } from "./src/scripts/BackupService";
 
+import { configureGifSource, getGifPreloader } from "./src/scripts/GifPreloader";
+import { createGiphyGifSource } from "./src/scripts/GiphyGifSource";
 import { prepareCustomCelebration } from "./src/scripts/CustomCelebrationRuntime";
 import { setThemeColorFromLocalStorage } from "./src/scripts/ColorTheme";
 setThemeColorFromLocalStorage();
@@ -33,6 +35,15 @@ TipStore.setGroupedTips(groupedTips);
 // Get the custom celebration (if one is set up on this device) ready in the
 // background so it can start instantly later. Nothing plays here.
 prepareCustomCelebration();
+
+// Celebration GIFs: switched on only when a GIPHY key was given at build time
+// (see README); without one nothing is fetched. The first GIF loads in the
+// background now so it is ready when a big tip is logged.
+const gifApiKey = import.meta.env.VITE_GIF_API_KEY;
+if (gifApiKey) {
+  configureGifSource(createGiphyGifSource(gifApiKey));
+  getGifPreloader().preloadNext();
+}
 
 // Define routes
 const routes = [
