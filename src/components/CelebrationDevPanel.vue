@@ -90,7 +90,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 <style scoped>
 .devPanel {
   position: fixed;
-  bottom: 0.5rem;
+  top: 0.5rem; /* at the top: the celebration's close button is at the bottom centre */
   left: 0.5rem;
   z-index: 3000;
   display: flex;

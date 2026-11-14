@@ -1,6 +1,6 @@
 /**
- * The canvas animations behind the celebrations: falling dollar bills, a
- * confetti burst and fireworks. Drawn with plain canvas shapes (no images),
+ * The canvas animations behind the celebrations: falling dollar bills, 
+ * confetti bursts and fireworks. Drawn with plain canvas shapes (no images),
  * so everything is original and nothing is downloaded.
  *
  * Nothing flashes: every effect is moving shapes on a transparent canvas,
@@ -8,9 +8,22 @@
  * a second.
  */
 
-export type ParticleShow = "billsRain" | "confetti" | "fireworks";
+import {
+  CONFETTI_BURSTS,
+  FIREWORK_FLIGHT_SECONDS,
+  FIREWORK_ROCKETS,
+  JACKPOT_BILLS_START_SECONDS,
+} from "./CelebrationTimings";
 
-type ParticleShape = "bill" | "confetti" | "spark";
+export type ParticleShow = "billsRain" | "jackpotBills" | "confetti" | "fireworks";
+
+type ParticleShape = "bill" | "confetti" | "spark" | "rocket";
+
+/** A point a rocket has passed through, for its trail. */
+interface TrailPoint {
+  x: number;
+  y: number;
+}
 
 interface Particle {
   shape: ParticleShape;
@@ -25,12 +38,14 @@ interface Particle {
   age: number; // seconds alive
   lifetime: number; // seconds until gone
   wobblePhase: number;
+  trail?: TrailPoint[]; // a rocket's recent positions, newest last
+  burstColor?: string; // a rocket's colour for the burst it ends in
 }
 
 interface ShowState {
   particles: Particle[];
   elapsedSeconds: number;
-  nextBurstIndex: number; // fireworks launched so far
+  nextBurstIndex: number; // confetti bursts or firework rockets launched so far
   spawnedBills: number;
 }
 
@@ -57,12 +72,13 @@ interface ShowDefinition {
 const BILL_COLORS = ["#2e7d32", "#388e3c", "#43a047", "#2f6f3a"];
 const CONFETTI_COLORS = ["#ff5252", "#ffd740", "#69f0ae", "#40c4ff", "#e040fb", "#ffffff"];
 const FIREWORK_COLORS = ["#ff5252", "#ffd740", "#69f0ae", "#40c4ff", "#e040fb"];
-const BILL_COUNT = 46;
-const BILL_SPAWN_SECONDS = 2; // bills are released over this long, not all at once
 const BILL_HEIGHT_RATIO = 0.45; // a bill is a little under half as tall as wide
-const CONFETTI_COUNT = 140;
-const FIREWORK_LAUNCH_SECONDS = [0.1, 1, 1.9]; // matches the three booms in CelebrationSounds
+const CONFETTI_PER_BURST = 50;
 const FIREWORK_SPARKS = 70;
+const TRAIL_LENGTH = 16; // positions kept for a rocket's trail
+const TRAIL_WIDTH = 3;
+const ROCKET_COLOR = "#fff3c4";
+const ROCKET_SIZE = 3;
 const FADE_OUT_FRACTION = 0.3; // last part of a particle's life spent fading
 
 function randomBetween(minimum: number, maximum: number): number {
@@ -91,22 +107,30 @@ function createBill(width: number): Particle {
   };
 }
 
-/** Release the bills gradually over the first couple of seconds. */
-function spawnBills(state: ShowState, area: ShowArea): void {
-  const dueByNow = Math.min(
-    BILL_COUNT,
-    Math.floor((state.elapsedSeconds / BILL_SPAWN_SECONDS) * BILL_COUNT) + 1,
-  );
-  while (state.spawnedBills < dueByNow) {
-    state.particles.push(createBill(area.width));
-    state.spawnedBills++;
-  }
+/** When and how many bills a falling-bills show releases. */
+interface BillRelease {
+  count: number;
+  startSeconds: number; // the first bill appears now (0) or later (over the jackpot)
+  spreadSeconds: number; // bills are released over this long, not all at once
 }
 
-/** One confetti piece thrown up and outward from a launch point. */
+/** A spawner that releases the bills gradually, as the release says. */
+function billSpawner(release: BillRelease): (state: ShowState, area: ShowArea) => void {
+  return (state, area) => {
+    const secondsIn = state.elapsedSeconds - release.startSeconds;
+    if (secondsIn < 0) return;
+    const dueByNow = Math.min(release.count, Math.floor((secondsIn / release.spreadSeconds) * release.count) + 1);
+    while (state.spawnedBills < dueByNow) {
+      state.particles.push(createBill(area.width));
+      state.spawnedBills++;
+    }
+  };
+}
+
+/** One confetti piece popped outward from a burst's centre, mostly upward. */
 function createConfettiPiece(x: number, y: number, accentColor: string): Particle {
-  const angle = randomBetween(-Math.PI * 0.85, -Math.PI * 0.15); // upward fan
-  const speed = randomBetween(350, 900);
+  const angle = randomBetween(-Math.PI * 0.95, -Math.PI * 0.05); // an upward fan
+  const speed = randomBetween(220, 620);
   return {
     shape: "confetti",
     x,
@@ -118,19 +142,20 @@ function createConfettiPiece(x: number, y: number, accentColor: string): Particl
     size: randomBetween(7, 13),
     color: randomItem([...CONFETTI_COLORS, accentColor]),
     age: 0,
-    lifetime: randomBetween(2.4, 3.6),
+    lifetime: randomBetween(3, 4.5), // long enough to drift down until the next burst
     wobblePhase: randomBetween(0, Math.PI * 2),
   };
 }
 
-/** Throw all the confetti at once from the bottom corners and middle. */
-function spawnConfettiBurst(state: ShowState, area: ShowArea): void {
-  if (state.nextBurstIndex > 0) return; // one burst only
-  state.nextBurstIndex = 1;
-  const launchPoints = [area.width * 0.1, area.width * 0.5, area.width * 0.9];
-  for (let index = 0; index < CONFETTI_COUNT; index++) {
-    const launchX = launchPoints[index % launchPoints.length];
-    state.particles.push(createConfettiPiece(launchX, area.height, area.accentColor));
+/** Pop each confetti burst when its time comes: the first near the bottom, each next one higher. */
+function spawnConfettiBursts(state: ShowState, area: ShowArea): void {
+  const burst = CONFETTI_BURSTS[state.nextBurstIndex];
+  if (burst === undefined || state.elapsedSeconds < burst.atSeconds) return;
+  state.nextBurstIndex++;
+  const centreX = area.width * burst.widthFraction;
+  const centreY = area.height * burst.heightFraction;
+  for (let index = 0; index < CONFETTI_PER_BURST; index++) {
+    state.particles.push(createConfettiPiece(centreX, centreY, area.accentColor));
   }
 }
 
@@ -154,38 +179,80 @@ function createSpark(x: number, y: number, color: string): Particle {
   };
 }
 
-/** Launch each firework burst when its time comes, in the upper half of the screen. */
+/** A rocket flying straight up from the bottom edge to where it will burst, leaving a trail. */
+function createRocket(launch: { x: number; targetY: number; color: string }, area: ShowArea): Particle {
+  const { x, targetY, color } = launch;
+  return {
+    shape: "rocket",
+    x,
+    y: area.height,
+    velocityX: 0,
+    velocityY: -(area.height - targetY) / FIREWORK_FLIGHT_SECONDS,
+    rotation: 0,
+    spin: 0,
+    size: ROCKET_SIZE,
+    color: ROCKET_COLOR,
+    age: 0,
+    lifetime: FIREWORK_FLIGHT_SECONDS,
+    wobblePhase: 0,
+    trail: [],
+    burstColor: color,
+  };
+}
+
+/** Launch each rocket when its time comes (it bursts where it arrives, see burstArrivedRockets). */
 function spawnFireworks(state: ShowState, area: ShowArea): void {
-  const nextLaunch = FIREWORK_LAUNCH_SECONDS[state.nextBurstIndex];
-  if (nextLaunch === undefined || state.elapsedSeconds < nextLaunch) return;
+  const rocket = FIREWORK_ROCKETS[state.nextBurstIndex];
+  if (rocket === undefined || state.elapsedSeconds < rocket.launchSeconds) return;
   state.nextBurstIndex++;
-  const centreX = randomBetween(area.width * 0.2, area.width * 0.8);
-  const centreY = randomBetween(area.height * 0.15, area.height * 0.45);
-  const color = randomItem(FIREWORK_COLORS);
-  for (let index = 0; index < FIREWORK_SPARKS; index++) {
-    state.particles.push(createSpark(centreX, centreY, color));
+  const x = area.width * rocket.widthFraction;
+  const targetY = area.height * rocket.burstHeightFraction;
+  state.particles.push(createRocket({ x, targetY, color: randomItem(FIREWORK_COLORS) }, area));
+}
+
+/** Burst every rocket that has arrived: a ball of sparks where the rocket was. */
+function burstArrivedRockets(state: ShowState): void {
+  const arrived = state.particles.filter((particle) => particle.shape === "rocket" && particle.age >= particle.lifetime);
+  for (const rocket of arrived) {
+    for (let index = 0; index < FIREWORK_SPARKS; index++) {
+      state.particles.push(createSpark(rocket.x, rocket.y, rocket.burstColor ?? randomItem(FIREWORK_COLORS)));
+    }
   }
 }
 
+const BILLS_RAIN_RELEASE: BillRelease = { count: 90, startSeconds: 0, spreadSeconds: 4.5 }; // keeps bills falling through the 6 seconds
+const JACKPOT_BILLS_RELEASE: BillRelease = { count: 40, startSeconds: JACKPOT_BILLS_START_SECONDS, spreadSeconds: 2 };
+
 const SHOWS: Record<ParticleShow, ShowDefinition> = {
-  billsRain: { gravity: 0, drag: 1, spawn: spawnBills },
-  confetti: { gravity: 900, drag: 0.35, spawn: spawnConfettiBurst },
+  billsRain: { gravity: 0, drag: 1, spawn: billSpawner(BILLS_RAIN_RELEASE) },
+  jackpotBills: { gravity: 0, drag: 1, spawn: billSpawner(JACKPOT_BILLS_RELEASE) },
+  confetti: { gravity: 170, drag: 0.4, spawn: spawnConfettiBursts },
   fireworks: { gravity: 140, drag: 0.25, spawn: spawnFireworks },
 };
 
-/** Move every particle forward by a time step and drop the ones that are done. */
+/** Move one particle forward; a rocket flies straight (no gravity or drag) and adds to its trail. */
+function stepParticle(particle: Particle, definition: ShowDefinition, seconds: number): void {
+  particle.age += seconds;
+  if (particle.shape === "rocket") {
+    particle.trail?.push({ x: particle.x, y: particle.y });
+    if ((particle.trail?.length ?? 0) > TRAIL_LENGTH) particle.trail?.shift();
+    particle.y += particle.velocityY * seconds;
+    return;
+  }
+  const speedKept = Math.pow(definition.drag, seconds);
+  particle.velocityY += definition.gravity * seconds;
+  particle.velocityX *= speedKept;
+  particle.velocityY *= particle.shape === "bill" ? 1 : speedKept;
+  particle.x += particle.velocityX * seconds;
+  particle.y += particle.velocityY * seconds;
+  particle.rotation += particle.spin * seconds;
+}
+
+/** Move every particle forward by a time step, burst the rockets that arrived, and drop the ones that are done. */
 function stepParticles(run: ShowRun, seconds: number): void {
   const { state, definition, area } = run;
-  const speedKept = Math.pow(definition.drag, seconds);
-  for (const particle of state.particles) {
-    particle.age += seconds;
-    particle.velocityY += definition.gravity * seconds;
-    particle.velocityX *= speedKept;
-    particle.velocityY *= particle.shape === "bill" ? 1 : speedKept;
-    particle.x += particle.velocityX * seconds;
-    particle.y += particle.velocityY * seconds;
-    particle.rotation += particle.spin * seconds;
-  }
+  for (const particle of state.particles) stepParticle(particle, definition, seconds);
+  burstArrivedRockets(state);
   state.particles = state.particles.filter(
     (particle) => particle.age < particle.lifetime && particle.y < area.height + 120,
   );
@@ -230,10 +297,37 @@ function drawSpark(context: CanvasRenderingContext2D, particle: Particle): void 
   context.fill();
 }
 
+/** A rocket's trail: short strokes behind the head, the older the fainter (drawn relative to the head, which is the origin). */
+function drawTrail(context: CanvasRenderingContext2D, particle: Particle): void {
+  const trail = particle.trail ?? [];
+  context.lineCap = "round";
+  context.lineWidth = TRAIL_WIDTH;
+  context.strokeStyle = particle.burstColor ?? ROCKET_COLOR;
+  trail.forEach((point, index) => {
+    const next = trail[index + 1] ?? { x: particle.x, y: particle.y };
+    context.globalAlpha = (index + 1) / (trail.length + 1);
+    context.beginPath();
+    context.moveTo(point.x - particle.x, point.y - particle.y);
+    context.lineTo(next.x - particle.x, next.y - particle.y);
+    context.stroke();
+  });
+  context.globalAlpha = 1;
+}
+
+/** A rocket: a fading trail behind a bright head. */
+function drawRocket(context: CanvasRenderingContext2D, particle: Particle): void {
+  drawTrail(context, particle);
+  context.fillStyle = particle.color;
+  context.beginPath();
+  context.arc(0, 0, particle.size, 0, Math.PI * 2);
+  context.fill();
+}
+
 const DRAWERS: Record<ParticleShape, (context: CanvasRenderingContext2D, particle: Particle) => void> = {
   bill: drawBill,
   confetti: drawConfetti,
   spark: drawSpark,
+  rocket: drawRocket,
 };
 
 /** Draw every particle, fading each out over the end of its life. */
@@ -241,7 +335,7 @@ function drawParticles(context: CanvasRenderingContext2D, state: ShowState): voi
   for (const particle of state.particles) {
     const lifeLeft = 1 - particle.age / particle.lifetime;
     context.save();
-    context.globalAlpha = Math.min(1, lifeLeft / FADE_OUT_FRACTION);
+    context.globalAlpha = particle.shape === "rocket" ? 1 : Math.min(1, lifeLeft / FADE_OUT_FRACTION); // a rocket is drawn at full strength until it bursts
     context.translate(particle.x, particle.y);
     DRAWERS[particle.shape](context, particle);
     context.restore();

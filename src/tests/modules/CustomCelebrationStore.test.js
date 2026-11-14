@@ -84,9 +84,9 @@ describe("custom celebration storage (fake IndexedDB)", () => {
 });
 
 describe("sanitizeClipTimes", () => {
-  it("defaults the length to 3 seconds and the start to 0", () => {
-    expect(DEFAULT_LENGTH_SECONDS).toBe(3);
-    expect(sanitizeClipTimes(NaN, NaN)).toEqual({ startSeconds: 0, lengthSeconds: 3 });
+  it("defaults the length to 6 seconds and the start to 0", () => {
+    expect(DEFAULT_LENGTH_SECONDS).toBe(6);
+    expect(sanitizeClipTimes(NaN, NaN)).toEqual({ startSeconds: 0, lengthSeconds: 6 });
   });
 
   it("keeps good values", () => {
@@ -94,8 +94,8 @@ describe("sanitizeClipTimes", () => {
   });
 
   it("replaces a negative start with 0 and a zero or negative length with the default", () => {
-    expect(sanitizeClipTimes(-1, 0)).toEqual({ startSeconds: 0, lengthSeconds: 3 });
-    expect(sanitizeClipTimes(5, -2)).toEqual({ startSeconds: 5, lengthSeconds: 3 });
+    expect(sanitizeClipTimes(-1, 0)).toEqual({ startSeconds: 0, lengthSeconds: 6 });
+    expect(sanitizeClipTimes(5, -2)).toEqual({ startSeconds: 5, lengthSeconds: 6 });
   });
 });
 

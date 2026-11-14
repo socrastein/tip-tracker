@@ -8,7 +8,7 @@
  */
 
 /** Seconds of sound played when the owner has not chosen a length. */
-export const DEFAULT_LENGTH_SECONDS = 3;
+export const DEFAULT_LENGTH_SECONDS = 6;
 
 const DATABASE_NAME = "tipTrackerCelebration";
 const STORE_NAME = "custom";

@@ -1,4 +1,11 @@
 import type { CelebrationName } from "./CelebrationRotation";
+import {
+  BUILT_IN_CELEBRATION_SECONDS,
+  CONFETTI_BURSTS,
+  FIREWORK_FLIGHT_SECONDS,
+  FIREWORK_ROCKETS,
+  JACKPOT_REEL_STOP_SECONDS,
+} from "./CelebrationTimings";
 
 /**
  * Sounds for the celebrations, all synthesized with the Web Audio API
@@ -21,6 +28,8 @@ const NOTE_C5 = 523.25;
 const NOTE_E5 = 659.25;
 const NOTE_G5 = 783.99;
 const NOTE_C6 = 1046.5;
+const NOTE_E6 = 1318.5;
+const NOTE_G6 = 1568;
 const BELL_HIGH = 1760; // A6, the "ching" of the cash register bell
 const BELL_LOW = 1318.5; // E6, the "cha"
 
@@ -126,25 +135,37 @@ const coinTinkles: SoundScore = (context, startTime, output) => {
   }
 };
 
-/** Bills rain: a soft whoosh under the cash register and tinkling coins. */
+/** Bills rain: a soft whoosh under the cash register, then coins tinkling through the rest of the six seconds. */
 const billsRainScore: SoundScore = (context, startTime, output) => {
-  playNoise(context, output, { startTime, duration: 1.4, volume: 0.25, filterFrequency: 900 });
+  playNoise(context, output, { startTime, duration: 2.4, volume: 0.25, filterFrequency: 900 });
   cashRegister(context, startTime + 0.1, output);
   coinTinkles(context, startTime + 0.9, output);
+  coinTinkles(context, startTime + 2.6, output);
+  cashRegister(context, startTime + 3.6, output);
+  coinTinkles(context, startTime + 4.4, output);
 };
 
-/** Confetti: a party-popper bang, then the cash register. */
-const confettiScore: SoundScore = (context, startTime, output) => {
+/** One party-popper bang. */
+function playPop(context: AudioContext, output: AudioNode, startTime: number): void {
   playNoise(context, output, { startTime, duration: 0.18, volume: 0.9, filterFrequency: 1200 });
   playGlide(context, output, { fromFrequency: 220, toFrequency: 60, startTime, duration: 0.2, volume: 0.6 });
-  cashRegister(context, startTime + 0.3, output);
+}
+
+/** Confetti: a pop for each burst as it works up the screen, with the cash register on the first and last. */
+const confettiScore: SoundScore = (context, startTime, output) => {
+  CONFETTI_BURSTS.forEach((burst, index) => {
+    playPop(context, output, startTime + burst.atSeconds);
+    // Each pop a little higher, like the bursts.
+    playTone(context, output, { frequency: NOTE_C5 * 2 ** (index / 4), startTime: startTime + burst.atSeconds + 0.05, duration: 0.5, volume: 0.15, type: "triangle" });
+  });
+  cashRegister(context, startTime + CONFETTI_BURSTS[0].atSeconds + 0.3, output);
+  cashRegister(context, startTime + CONFETTI_BURSTS[CONFETTI_BURSTS.length - 1].atSeconds + 0.3, output);
 };
 
-/** One firework: a rising whistle, a boom, and crackling sparks. */
+/** One firework: a whistle rising for the whole flight, then a boom and crackling sparks where it bursts. */
 function playFirework(context: AudioContext, output: AudioNode, startTime: number): void {
-  const whistleSeconds = 0.5;
-  playGlide(context, output, { fromFrequency: 500, toFrequency: 1800, startTime, duration: whistleSeconds, volume: 0.12 });
-  const boomTime = startTime + whistleSeconds;
+  playGlide(context, output, { fromFrequency: 500, toFrequency: 1800, startTime, duration: FIREWORK_FLIGHT_SECONDS, volume: 0.12 });
+  const boomTime = startTime + FIREWORK_FLIGHT_SECONDS;
   playNoise(context, output, { startTime: boomTime, duration: 0.7, volume: 0.9, filterFrequency: 300, filterType: "lowpass" });
   playGlide(context, output, { fromFrequency: 160, toFrequency: 35, startTime: boomTime, duration: 0.5, volume: 0.8 });
   const crackleCount = 12;
@@ -154,37 +175,78 @@ function playFirework(context: AudioContext, output: AudioNode, startTime: numbe
   }
 }
 
-/** Fireworks: three bursts, matching the three the animation launches. */
+/** Fireworks: a whistle and boom for every rocket the animation launches, at the same moments. */
 const fireworksScore: SoundScore = (context, startTime, output) => {
-  const burstTimes = [0, 0.9, 1.8];
-  for (const offset of burstTimes) playFirework(context, output, startTime + offset);
+  for (const rocket of FIREWORK_ROCKETS) playFirework(context, output, startTime + rocket.launchSeconds);
 };
 
-/** The "600 Club" fanfare: a rising major arpeggio ending on a held chord. */
-const clubScore: SoundScore = (context, startTime, output) => {
-  const arpeggio = [NOTE_C5, NOTE_E5, NOTE_G5, NOTE_C6];
-  arpeggio.forEach((frequency, index) => {
-    playTone(context, output, { frequency, startTime: startTime + index * 0.14, duration: 0.3, volume: 0.25, type: "square" });
+/** A rising run of square-wave notes. */
+function playArpeggio(context: AudioContext, output: AudioNode, run: { startTime: number; notes: number[]; noteGap: number }): void {
+  run.notes.forEach((frequency, index) => {
+    playTone(context, output, { frequency, startTime: run.startTime + index * run.noteGap, duration: 0.3, volume: 0.25, type: "square" });
   });
-  const chordTime = startTime + arpeggio.length * 0.14;
-  for (const frequency of [NOTE_C5, NOTE_E5, NOTE_G5, NOTE_C6]) {
-    playTone(context, output, { frequency, startTime: chordTime, duration: 1.6, volume: 0.18, type: "sawtooth" });
+}
+
+/** A held chord. */
+function playChord(context: AudioContext, output: AudioNode, chord: { startTime: number; notes: number[]; duration: number }): void {
+  for (const frequency of chord.notes) {
+    playTone(context, output, { frequency, startTime: chord.startTime, duration: chord.duration, volume: 0.18, type: "sawtooth" });
   }
+}
+
+/** The Ballin' Bean Club fanfare: a rising arpeggio and held chord, then a higher run and a big final chord lasting to the end. */
+const clubScore: SoundScore = (context, startTime, output) => {
+  playArpeggio(context, output, { startTime, notes: [NOTE_C5, NOTE_E5, NOTE_G5, NOTE_C6], noteGap: 0.14 });
+  playChord(context, output, { startTime: startTime + 0.56, notes: [NOTE_C5, NOTE_E5, NOTE_G5, NOTE_C6], duration: 1.6 });
+  playArpeggio(context, output, { startTime: startTime + 2.4, notes: [NOTE_G5, NOTE_C6, NOTE_E6, NOTE_G6], noteGap: 0.14 });
+  coinTinkles(context, startTime + 2.9, output);
+  playChord(context, output, {
+    startTime: startTime + 3.2,
+    notes: [NOTE_C5, NOTE_E5, NOTE_G5, NOTE_C6, NOTE_E6],
+    duration: BUILT_IN_CELEBRATION_SECONDS - 3.4,
+  });
 };
 
-/** Jackpot: slowing reel ticks, three dings as the reels stop, then coins. */
-const jackpotScore: SoundScore = (context, startTime, output) => {
+/** Slowing reel ticks until the last reel stops. */
+function playReelTicks(context: AudioContext, output: AudioNode, startTime: number): void {
+  const lastStop = JACKPOT_REEL_STOP_SECONDS[JACKPOT_REEL_STOP_SECONDS.length - 1];
   let time = startTime;
   let gap = 0.05;
-  while (time < startTime + 1.6) {
+  while (time < startTime + lastStop) {
     playNoise(context, output, { startTime: time, duration: 0.02, volume: 0.5, filterFrequency: 3000 });
     time += gap;
-    gap *= 1.12; // each tick a little later: the reels slow down
+    gap *= 1.045; // each tick a little later: the reels slow down
   }
-  [NOTE_E5, NOTE_G5, NOTE_C6].forEach((frequency, index) => {
-    playTone(context, output, { frequency, startTime: startTime + 1.7 + index * 0.35, duration: 0.9, volume: 0.3, type: "triangle" });
+}
+
+/** The payout once the last reel lands: a rising arpeggio, a cascade of coins and a final chord. */
+function playPayout(context: AudioContext, output: AudioNode, startTime: number): void {
+  const arpeggio = [NOTE_C5, NOTE_E5, NOTE_G5, NOTE_C6, NOTE_E6, NOTE_G6];
+  playArpeggio(context, output, { startTime, notes: arpeggio, noteGap: 0.11 });
+  const cascadeSeconds = 1.8;
+  const coinCount = 30;
+  for (let index = 0; index < coinCount; index++) {
+    const time = startTime + 0.1 + (index / coinCount) * cascadeSeconds + Math.random() * 0.03;
+    const pitch = 2200 + Math.random() * 2200;
+    playTone(context, output, { frequency: pitch, startTime: time, duration: 0.16, volume: 0.14 });
+  }
+  playNoise(context, output, { startTime, duration: cascadeSeconds, volume: 0.12, filterFrequency: 6000, filterType: "highpass" });
+  const chordTime = startTime + 1.0;
+  playChord(context, output, {
+    startTime: chordTime,
+    notes: [NOTE_C5, NOTE_E5, NOTE_G5, NOTE_C6],
+    duration: BUILT_IN_CELEBRATION_SECONDS - JACKPOT_REEL_STOP_SECONDS[2] - 1.2,
   });
-  coinTinkles(context, startTime + 2.5, output);
+  cashRegister(context, startTime + 1.3, output);
+}
+
+/** Jackpot: slowing reel ticks, a ding as each reel stops, then a slot-machine payout that lasts to the end. */
+const jackpotScore: SoundScore = (context, startTime, output) => {
+  playReelTicks(context, output, startTime);
+  [NOTE_E5, NOTE_G5, NOTE_C6].forEach((frequency, index) => {
+    playTone(context, output, { frequency, startTime: startTime + JACKPOT_REEL_STOP_SECONDS[index], duration: 0.9, volume: 0.3, type: "triangle" });
+  });
+  playPayout(context, output, startTime + JACKPOT_REEL_STOP_SECONDS[2] + 0.1);
 };
 
 const SOUND_SCORES: Record<BuiltInCelebration, SoundScore> = {

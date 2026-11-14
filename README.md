@@ -30,11 +30,17 @@ A celebration has an id, a name, an optional sound with a start time and a clip 
 The console previews celebrations with the same code the phone plays them with. These files are copied verbatim into the console (never edited there); change them here first:
 
 - `src/scripts/CelebrationClip.ts` (cut a sound to its clip, play a clip celebration)
-- `src/scripts/CelebrationState.ts`, `CelebrationParticles.ts`, `CelebrationSounds.ts`, `CustomCelebrationAudio.ts`, `CelebrationRotation.ts` and `BigTipRule.ts` (what the overlay and the clip player import)
-- `src/components/CelebrationOverlay.vue` (it is `position: fixed`; the console puts it inside a frame with `transform: translateZ(0)`, which makes a fixed child fill the frame instead of the window)
+- `src/scripts/CelebrationState.ts`, `CelebrationParticles.ts`, `CelebrationSounds.ts`, `CelebrationTimings.ts`, `CustomCelebrationAudio.ts` and `CelebrationRotation.ts` (what the overlay and the clip player import)
+- `src/components/CelebrationOverlay.vue` (it is `position: fixed` and sized in vw, vh and rem; the console plays it inside a phone-sized iframe)
 
 ## How the Phone Reaches the Home Server
 
 The app is served over HTTPS (GitHub Pages) and the home server speaks plain HTTP on the LAN (`http://192.168.0.2:5000`). A page on HTTPS normally may not call plain HTTP ("mixed content"). Chrome makes an exception for a request to a private IP address written as a literal, and since Chrome 142 asks the user once for the "local network access" permission; after that the phone's backups and the celebration sync go through. The evidence that it works is in the server itself: its journal shows the phone's POSTs (each preceded by an OPTIONS preflight, which the server answers with the Private Network Access headers) and the archive folder holds a long series of backups that only a page loaded from the deployed app could have made.
 
 Safari on iOS has no such exemption: it blocks the request, so on an iPhone the backup and the pack sync would silently fail (the menu's "Last saved" and "Pack" lines would show it). This works because the owner's wife uses Chrome on Android; if that ever changes, the server needs HTTPS with a certificate the phone trusts.
+
+## The built-in celebrations
+
+Five celebrations are built in: Bills Rain, Confetti, Fireworks, Ballin' Bean Club and Jackpot. Each lasts 6 seconds (`BUILT_IN_CELEBRATION_SECONDS` in `src/scripts/CelebrationTimings.ts`, which also holds when each burst, rocket and reel lands, so the sound is heard when the animation shows it). Confetti pops in several bursts working up the screen; fireworks are rockets that fly up from the bottom edge with a trail and burst where they arrive; the Jackpot's reels land on green dollar signs and bills then fall over it. A new custom celebration's clip is 6 seconds by default.
+
+A tap on a celebration does not end it (too easy by accident): the first tap shows a round X button at the bottom centre and only that ends it early; Escape also closes it, and the first Tab shows and focuses the button. While it plays the overlay catches every tap, so nothing underneath is pressed; the tip is saved before a celebration starts, so nothing in the add-tip flow needs a tap meanwhile.
