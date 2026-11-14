@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 async function show(name, gifUrl) {
-  showCelebration(name, gifUrl);
+  showCelebration(name, { gifUrl });
   await nextTick();
   await nextTick();
 }

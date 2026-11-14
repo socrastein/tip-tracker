@@ -15,7 +15,21 @@ export const BUILT_IN_CELEBRATIONS = [
 /** The owner's own celebration, which exists only once its media is set up on the device. */
 export const CUSTOM_CELEBRATION = "custom" as const;
 
-export type CelebrationName = (typeof BUILT_IN_CELEBRATIONS)[number] | typeof CUSTOM_CELEBRATION;
+/** A celebration made from the home server's pack, named "pack:" plus its base file name. */
+export type PackCelebrationName = `pack:${string}`;
+
+export type CelebrationName =
+  | (typeof BUILT_IN_CELEBRATIONS)[number]
+  | typeof CUSTOM_CELEBRATION
+  | PackCelebrationName;
+
+/** The prefix that marks a pack celebration's name. */
+export const PACK_NAME_PREFIX = "pack:";
+
+/** Whether a celebration name belongs to a pack celebration. */
+export function isPackCelebration(name: string): name is PackCelebrationName {
+  return name.startsWith(PACK_NAME_PREFIX);
+}
 
 /**
  * Pick the next celebration from the available ones, skipping the last

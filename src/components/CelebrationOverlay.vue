@@ -11,14 +11,14 @@ import { BIG_TIP_THRESHOLD } from "../scripts/BigTipRule";
 import { celebrationState, endCelebration } from "../scripts/CelebrationState";
 import { startParticleShow } from "../scripts/CelebrationParticles";
 import type { ParticleShow } from "../scripts/CelebrationParticles";
+import { BUILT_IN_CELEBRATIONS } from "../scripts/CelebrationRotation";
 import type { CelebrationName } from "../scripts/CelebrationRotation";
-import { getPreparedCustomCelebration } from "../scripts/CustomCelebrationRuntime";
 
 const ACCENT_FALLBACK = "#378e3c";
-const CUSTOM_EXTRA_SECONDS = 1; // the picture and bills outlast the clip a little
-
-// How many milliseconds each built-in celebration stays on screen.
-const DURATION_MS: Record<Exclude<CelebrationName, "custom">, number> = {
+const DEFAULT_DURATION_MS = 4500; // a celebration that brings no length of its own
+// How many milliseconds each built-in celebration stays on screen. The custom
+// and pack celebrations bring their own length (the sound clip plus a moment).
+const DURATION_MS: Record<(typeof BUILT_IN_CELEBRATIONS)[number], number> = {
   billsRain: 4500,
   confetti: 4000,
   fireworks: 4200,
@@ -26,13 +26,19 @@ const DURATION_MS: Record<Exclude<CelebrationName, "custom">, number> = {
   jackpot: 4600,
 };
 
-// The celebrations drawn on the canvas, and the particle show each one runs.
+// The banner and jackpot are drawn with CSS only. Every other celebration
+// (including custom and pack ones) is a canvas show: bills, confetti or fireworks.
+const CSS_ONLY_CELEBRATIONS: CelebrationName[] = ["club", "jackpot"];
 const PARTICLE_SHOWS: Partial<Record<CelebrationName, ParticleShow>> = {
   billsRain: "billsRain",
   confetti: "confetti",
   fireworks: "fireworks",
-  custom: "billsRain",
 };
+
+/** The canvas show a celebration runs, or undefined for the CSS-only ones. */
+function particleShowFor(name: CelebrationName): ParticleShow | undefined {
+  return CSS_ONLY_CELEBRATIONS.includes(name) ? undefined : (PARTICLE_SHOWS[name] ?? "billsRain");
+}
 
 // Symbols on each reel's strip, top to bottom. The last one, where a reel
 // stops, is "$" so the three reels land on a jackpot.
@@ -40,15 +46,13 @@ const REEL_SYMBOLS = ["★", "7", "$", "♦", "7", "★", "$", "♦", "★", "7"
 
 const canvas = ref<HTMLCanvasElement | null>(null);
 const current = computed(() => celebrationState.current);
-const customImageUrl = computed(() =>
-  current.value?.name === "custom" ? (getPreparedCustomCelebration()?.imageUrl ?? null) : null,
-);
+const pictureUrl = computed(() => current.value?.pictureUrl ?? null);
 
 // Set when the GIF could not be drawn, which hides it and its attribution.
 const gifFailed = ref(false);
 // A GIF shows unless the owner's own picture is already taking its place.
 const showGif = computed(
-  () => Boolean(current.value?.gifUrl) && !customImageUrl.value && !gifFailed.value,
+  () => Boolean(current.value?.gifUrl) && !pictureUrl.value && !gifFailed.value,
 );
 
 let stopParticles: (() => void) | null = null;
@@ -60,11 +64,10 @@ function readAccentColor(): string {
   return value || ACCENT_FALLBACK;
 }
 
-/** How long a celebration stays: the clip's length plus a moment for the custom one. */
-function durationFor(name: CelebrationName): number {
-  if (name !== "custom") return DURATION_MS[name];
-  const lengthSeconds = getPreparedCustomCelebration()?.settings.lengthSeconds ?? 0;
-  return (lengthSeconds + CUSTOM_EXTRA_SECONDS) * 1000;
+/** How long a celebration stays: its own length if it has one, else the built-in's. */
+function durationFor(celebration: { name: CelebrationName; durationMs: number | null }): number {
+  if (celebration.durationMs !== null) return celebration.durationMs;
+  return celebration.name in DURATION_MS ? DURATION_MS[celebration.name as keyof typeof DURATION_MS] : DEFAULT_DURATION_MS;
 }
 
 /** Stop animations and timers, leaving nothing running. */
@@ -77,17 +80,17 @@ function cleanUp(): void {
 }
 
 /** Start the visuals of a newly shown celebration. Failures only lose the animation. */
-async function begin(name: CelebrationName): Promise<void> {
+async function begin(celebration: { name: CelebrationName; durationMs: number | null }): Promise<void> {
   await nextTick(); // wait for the canvas to exist
   try {
-    const show = PARTICLE_SHOWS[name];
+    const show = particleShowFor(celebration.name);
     if (show && canvas.value) {
       stopParticles = startParticleShow(canvas.value, show, readAccentColor());
     }
   } catch (error) {
     console.warn("[Celebration] Animation failed:", error);
   }
-  endTimer = setTimeout(endCelebration, durationFor(name));
+  endTimer = setTimeout(endCelebration, durationFor(celebration));
   // Capture phase and no preventDefault: the tap ends the celebration and
   // still reaches the page underneath.
   window.addEventListener("pointerdown", endCelebration, true);
@@ -98,7 +101,7 @@ watch(
   () => {
     cleanUp();
     gifFailed.value = false;
-    if (current.value) void begin(current.value.name);
+    if (current.value) void begin(current.value);
   },
 );
 
@@ -107,7 +110,7 @@ onBeforeUnmount(cleanUp);
 
 <template>
   <div v-if="current" :key="current.id" class="celebration" :data-celebration="current.name" aria-hidden="true">
-    <canvas v-if="PARTICLE_SHOWS[current.name]" ref="canvas" class="celebrationCanvas" />
+    <canvas v-if="particleShowFor(current.name)" ref="canvas" class="celebrationCanvas" />
 
     <div v-if="current.name === 'club'" class="clubBanner">
       <span class="clubCoin coinLeft">$</span>
@@ -130,7 +133,7 @@ onBeforeUnmount(cleanUp);
       <p class="jackpotWord">Jackpot!</p>
     </div>
 
-    <img v-else-if="customImageUrl" :src="customImageUrl" class="customImage" alt="" />
+    <img v-else-if="pictureUrl" :src="pictureUrl" class="customImage" alt="" />
 
     <!-- A provider GIF; GIPHY's terms require its attribution wherever one is shown. -->
     <div v-if="showGif" class="celebrationGif">

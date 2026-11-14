@@ -2,6 +2,7 @@ import { shouldCelebrate } from "./BigTipRule";
 import {
   BUILT_IN_CELEBRATIONS,
   CUSTOM_CELEBRATION,
+  isPackCelebration,
   pickNextCelebration,
 } from "./CelebrationRotation";
 import type { CelebrationName } from "./CelebrationRotation";
@@ -10,6 +11,8 @@ import { playCelebrationSound, unlockAudioContext } from "./CelebrationSounds";
 import { playClip } from "./CustomCelebrationAudio";
 import { getPreparedCustomCelebration } from "./CustomCelebrationRuntime";
 import { getGifPreloader } from "./GifPreloader";
+import { getPackCelebrations, getPackImageUrls } from "./CelebrationPackRuntime";
+import { planPackCelebration } from "./PackCelebrationPlan";
 
 /**
  * Starts the celebration after a big tip has been saved. Everything here is
@@ -25,7 +28,8 @@ function readLastCelebration(): CelebrationName | null {
   try {
     const stored = localStorage.getItem(LAST_CELEBRATION_KEY);
     const known: string[] = [...BUILT_IN_CELEBRATIONS, CUSTOM_CELEBRATION];
-    return stored !== null && known.includes(stored) ? (stored as CelebrationName) : null;
+    if (stored === null) return null;
+    return known.includes(stored) || isPackCelebration(stored) ? (stored as CelebrationName) : null;
   } catch {
     return null; // storage unavailable: just allow any celebration
   }
@@ -59,11 +63,15 @@ function takeGifFor(name: CelebrationName): string | null {
   }
 }
 
-/** Every celebration that can play now: the built-ins, plus the custom one when set up. */
+/** Every celebration that can play now: the built-ins, the custom one when set up, and the pack's. */
 export function availableCelebrations(): CelebrationName[] {
   const custom = getPreparedCustomCelebration() ? [CUSTOM_CELEBRATION] : [];
-  return [...BUILT_IN_CELEBRATIONS, ...custom];
+  const pack = getPackCelebrations().map((celebration) => celebration.name);
+  return [...BUILT_IN_CELEBRATIONS, ...custom, ...pack];
 }
+
+const CUSTOM_EXTRA_MS = 1000; // the picture and bills outlast a clip a little
+const MIN_CLIP_CELEBRATION_MS = 4000; // a very short clip still gets a proper show
 
 /**
  * Play one celebration by name: sound first (inside the tap), then the visuals.
@@ -71,25 +79,61 @@ export function availableCelebrations(): CelebrationName[] {
  * @param name  the celebration to play
  */
 export function playCelebration(name: CelebrationName): void {
+  if (isPackCelebration(name)) {
+    playPackCelebration(name);
+    return;
+  }
   try {
     startCelebrationSound(name);
   } catch (error) {
     // No sound (blocked or unsupported) must not cost the visuals.
     console.warn("[Celebration] Sound could not start:", error);
   }
-  showCelebration(name, takeGifFor(name));
+  showCelebration(name, extrasFor(name));
+}
+
+/** The owner's picture and the length of their clip, for the custom celebration; the GIF for the others. */
+function extrasFor(name: CelebrationName): { gifUrl: string | null; pictureUrl: string | null; durationMs: number | null } {
+  const custom = name === CUSTOM_CELEBRATION ? getPreparedCustomCelebration() : null;
+  const pictureUrl = custom?.imageUrl ?? null;
+  const durationMs = custom ? (custom.settings.lengthSeconds * 1000) + CUSTOM_EXTRA_MS : null;
+  return { gifUrl: pictureUrl ? null : takeGifFor(name), pictureUrl, durationMs };
 }
 
 /** Start the sound for a celebration: the owner's clip or the synthesized score. */
 function startCelebrationSound(name: CelebrationName): void {
   const context = unlockAudioContext();
   if (name !== CUSTOM_CELEBRATION) {
-    playCelebrationSound(name, context);
+    playCelebrationSound(name as (typeof BUILT_IN_CELEBRATIONS)[number], context);
     return;
   }
   const custom = getPreparedCustomCelebration();
   if (custom === null) return;
   playClip(context, custom.buffer, custom.settings);
+}
+
+/**
+ * Play a pack celebration: its clip (or a built-in sound when the pack gave
+ * none), then its picture, a GIF, or just bills. A pack celebration that has
+ * gone missing, or any failure, plays nothing and never throws.
+ */
+function playPackCelebration(name: CelebrationName): void {
+  const celebration = getPackCelebrations().find((candidate) => candidate.name === name);
+  if (celebration === undefined) return;
+  const plan = planPackCelebration(celebration, getPackImageUrls(), getGifPreloader().hasReady());
+  try {
+    const context = unlockAudioContext();
+    if (celebration.clip) playClip(context, celebration.clip, { startSeconds: 0, lengthSeconds: celebration.clip.duration });
+    else if (plan.builtInSound) playCelebrationSound(plan.builtInSound, context);
+  } catch (error) {
+    console.warn("[Celebration] Pack sound could not start:", error);
+  }
+  const clipMs = celebration.clip ? celebration.clip.duration * 1000 + CUSTOM_EXTRA_MS : 0;
+  showCelebration(name, {
+    gifUrl: plan.useGif ? getGifPreloader().takeReady() : null,
+    pictureUrl: plan.pictureUrl,
+    durationMs: Math.max(clipMs, MIN_CLIP_CELEBRATION_MS),
+  });
 }
 
 /**

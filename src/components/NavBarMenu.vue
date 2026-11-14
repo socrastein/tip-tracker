@@ -2,12 +2,15 @@
 import { RouterLink } from "vue-router";
 import ColorThemeMenu from "../components/ColorThemeMenu.vue";
 import { BackupService } from "../scripts/BackupService";
+import { describePackSyncStatus, getPackSyncStatus } from "../scripts/CelebrationPackStatus";
 
 const emit = defineEmits(["close"]);
 
 // This component is remounted each time the menu opens (v-if in NavBar),
 // so a plain read is always fresh.
 const lastBackup = BackupService.getLastBackupInfo();
+
+const packStatus = getPackSyncStatus();
 
 function formatBackupTime(time) {
   const monthDay = time.toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -32,6 +35,9 @@ function formatBackupTime(time) {
       <div v-if="lastBackup" class="lastSaved">
         <span>Last saved: {{ lastBackup.count }} tips</span>
         <span>{{ formatBackupTime(lastBackup.time) }}</span>
+      </div>
+      <div v-if="packStatus" class="lastSaved">
+        <span>{{ describePackSyncStatus(packStatus) }}</span>
       </div>
     </div>
   </transition>

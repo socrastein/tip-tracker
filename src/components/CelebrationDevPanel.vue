@@ -9,6 +9,8 @@ import { onBeforeUnmount, onMounted, ref } from "vue";
 import { availableCelebrations, playCelebration } from "../scripts/BigTipCelebrator";
 import { BUILT_IN_CELEBRATIONS, CUSTOM_CELEBRATION } from "../scripts/CelebrationRotation";
 import { getGifPreloader } from "../scripts/GifPreloader";
+import { getPackCelebrations, preparePackCelebrations } from "../scripts/CelebrationPackRuntime";
+import { buildSamplePackFiles } from "./CelebrationDevSamplePack";
 import type { CelebrationName } from "../scripts/CelebrationRotation";
 
 // A stand-in for a provider GIF so the layout can be judged without an API key:
@@ -31,11 +33,19 @@ const SAMPLE_GIF_URL =
   );
 
 const isCustomReady = ref(false);
+const packNames = ref<CelebrationName[]>([]);
 const isSampleGifOn = ref(false);
 
 /** Refresh whether the custom celebration is set up (it loads in the background). */
 function refreshCustomReady(): void {
   isCustomReady.value = availableCelebrations().includes(CUSTOM_CELEBRATION);
+  packNames.value = getPackCelebrations().map((celebration) => celebration.name);
+}
+
+/** Load the made-up sample pack (nothing is downloaded or stored) so pack celebrations can be previewed. */
+async function loadSamplePack(): Promise<void> {
+  await preparePackCelebrations(await buildSamplePackFiles());
+  refreshCustomReady();
 }
 
 /** Play a celebration; this runs inside the click or key press, so sound is allowed. */
@@ -69,6 +79,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
       {{ name }}
     </button>
     <button v-if="isCustomReady" @click="preview(CUSTOM_CELEBRATION)">custom</button>
+    <button @click="loadSamplePack">load sample pack</button>
+    <button v-for="name in packNames" :key="name" @click="preview(name)">{{ name }}</button>
     <button :aria-pressed="isSampleGifOn" @click="isSampleGifOn = !isSampleGifOn">
       sample GIF: {{ isSampleGifOn ? "on" : "off" }}
     </button>

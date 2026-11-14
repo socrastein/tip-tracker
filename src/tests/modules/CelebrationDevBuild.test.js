@@ -43,12 +43,17 @@ describe("celebration preview tools", () => {
     developmentScripts = buildAndReadScripts("development");
   }, 120_000);
 
+  // The sample pack's button text and a file name only the dev sample pack builds.
+  const SAMPLE_PACK_MARKERS = ["load sample pack", "picturealone.png"];
+
   it("are present in a development build (so this check can tell the difference)", () => {
     expect(developmentScripts).toContain(PREVIEW_MARKER);
+    for (const marker of SAMPLE_PACK_MARKERS) expect(developmentScripts).toContain(marker);
   });
 
-  it("are absent from the production build", () => {
+  it("are absent from the production build, sample pack included", () => {
     expect(productionScripts).not.toContain(PREVIEW_MARKER);
+    for (const marker of SAMPLE_PACK_MARKERS) expect(productionScripts).not.toContain(marker);
   });
 
   it("leave the celebrations themselves in the production build", () => {

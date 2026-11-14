@@ -19,6 +19,8 @@ const REFILL_DELAY_MS = 1500; // after a celebration starts, so the refill never
 export interface GifPreloader {
   /** Find and load the next GIF in the background. Never rejects. */
   preloadNext(): Promise<void>;
+  /** Whether a GIF is ready right now (without taking it). */
+  hasReady(): boolean;
   /** Hand over the ready GIF's URL, once, or null when none is ready. Never waits. */
   takeReady(): string | null;
   /** Put a ready GIF in by hand (the dev preview's stub image). */
@@ -76,6 +78,10 @@ export function createGifPreloader(
     }
   }
 
+  function hasReady(): boolean {
+    return readyUrl !== null;
+  }
+
   function takeReady(): string | null {
     const url = readyUrl;
     readyUrl = null;
@@ -89,7 +95,7 @@ export function createGifPreloader(
     readyUrl = url;
   }
 
-  return { preloadNext, takeReady, setReady };
+  return { preloadNext, hasReady, takeReady, setReady };
 }
 
 /** The app's preloader. Starts switched off; main.js turns it on when there is a key. */

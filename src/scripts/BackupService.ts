@@ -48,6 +48,11 @@ export const BackupService = {
 
   _timer: null as number | null,
 
+  // Called (never awaited, never allowed to throw into the check) each time
+  // the home server has been verified. main.js uses it to start the celebration
+  // pack sync, so the pack rides on this one health check instead of polling.
+  onHomeServerVerified: null as (() => void) | null,
+
   getServerUrl(): string {
     return localStorage.getItem(this.SERVER_URL_KEY) || this.DEFAULT_SERVER_URL;
   },
@@ -172,6 +177,15 @@ export const BackupService = {
     return isNaN(time.getTime()) ? null : { count, time };
   },
 
+  /** Tell the registered listener (if any) the home server was verified; its failure is ignored. */
+  _notifyHomeServerVerified(): void {
+    try {
+      this.onHomeServerVerified?.();
+    } catch (error) {
+      console.warn("[BackupService] Home server listener failed:", error);
+    }
+  },
+
   /** One hourly check: ping → once-per-day guard → change check → send all. */
   async runBackupCheck(): Promise<void> {
     const stamp = () => new Date().toISOString();
@@ -180,6 +194,8 @@ export const BackupService = {
       console.log(`[${stamp()}] [BackupService] Home server not verified, skipping backup`);
       return;
     }
+
+    this._notifyHomeServerVerified();
 
     if (this.hasBackupToday()) {
       console.log(`[${stamp()}] [BackupService] Backup already created today, skipping`);

@@ -14,3 +14,7 @@ When a big tip is logged, some celebrations can show a random family-safe GIF (a
 - **GIPHY's rules** (developers.giphy.com/docs/api): "Powered By GIPHY" must be shown wherever a GIF is (the celebration does this), only rating "g" is requested, URLs are used exactly as GIPHY returns them, and nothing from GIPHY is stored: the next GIF is held in memory for one use and never written to storage.
 - **Which GIFs:** the search phrases are the list in `src/scripts/GifPhrases.ts`.
 - **Preview without a key:** on the dev server, the preview panel's "sample GIF" button swaps in a drawn stand-in image.
+
+## Private celebration pack (optional)
+
+Songs, GIFs and pictures for the big-tip celebrations are not in this repository. They live in a folder on the owner's home server and are downloaded quietly to the phone whenever it reaches that server (the same hourly check that backs up the tips). Once downloaded they work with no network. How to add or remove one, the file-name rules and the size limits are in the home server's README (`pythonServer`, "Tip Tracker celebration pack"). The menu shows a "Pack: N files, ..." line with the last result. On the dev server, the preview panel's "load sample pack" button loads made-up files so pack celebrations can be previewed.

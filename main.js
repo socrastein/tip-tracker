@@ -16,6 +16,8 @@ import { TipStore } from "./src/scripts/TipStore";
 import { TipGrouper } from "./src/scripts/TipGrouper";
 import { BackupService } from "./src/scripts/BackupService";
 
+import { preparePackCelebrations } from "./src/scripts/CelebrationPackRuntime";
+import { syncCelebrationPack } from "./src/scripts/CelebrationPackSync";
 import { configureGifSource, getGifPreloader } from "./src/scripts/GifPreloader";
 import { createGiphyGifSource } from "./src/scripts/GiphyGifSource";
 import { prepareCustomCelebration } from "./src/scripts/CustomCelebrationRuntime";
@@ -35,6 +37,8 @@ TipStore.setGroupedTips(groupedTips);
 // Get the custom celebration (if one is set up on this device) ready in the
 // background so it can start instantly later. Nothing plays here.
 prepareCustomCelebration();
+// Same for the celebration pack already downloaded to this device.
+preparePackCelebrations();
 
 // Celebration GIFs: switched on only when a GIPHY key was given at build time
 // (see README); without one nothing is fetched. The first GIF loads in the
@@ -73,4 +77,15 @@ app.mount("#app");
 // Only from the deployed app: each backup becomes the newest archive on the home server (the
 // one the app restores from), so a dev or test copy on the LAN must never send its tips.
 const isDeployedApp = window.location.hostname === "socrastein.github.io";
-if (isDeployedApp) BackupService.start();
+if (isDeployedApp) {
+  // Each time the home server is verified, quietly bring the celebration pack
+  // up to date (in the background, one file at a time, never during a celebration).
+  BackupService.onHomeServerVerified = () => {
+    syncCelebrationPack({
+      serverUrl: BackupService.getServerUrl(),
+      fetchWithTimeout: (url, timeoutMs) => BackupService._fetchWithTimeout(url, undefined, timeoutMs),
+      onChanged: () => preparePackCelebrations(),
+    });
+  };
+  BackupService.start();
+}
