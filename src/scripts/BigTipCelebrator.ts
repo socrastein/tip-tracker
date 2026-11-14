@@ -12,6 +12,7 @@ import { playClip } from "./CustomCelebrationAudio";
 import { getPreparedCustomCelebration } from "./CustomCelebrationRuntime";
 import { getGifPreloader } from "./GifPreloader";
 import { getPackCelebrations, getPackImageUrls } from "./CelebrationPackRuntime";
+import { MIN_CLIP_CELEBRATION_MS, playClipCelebration } from "./CelebrationClip";
 import { planPackCelebration } from "./PackCelebrationPlan";
 
 /**
@@ -71,7 +72,6 @@ export function availableCelebrations(): CelebrationName[] {
 }
 
 const CUSTOM_EXTRA_MS = 1000; // the picture and bills outlast a clip a little
-const MIN_CLIP_CELEBRATION_MS = 4000; // a very short clip still gets a proper show
 
 /**
  * Play one celebration by name: sound first (inside the tap), then the visuals.
@@ -121,19 +121,21 @@ function playPackCelebration(name: CelebrationName): void {
   const celebration = getPackCelebrations().find((candidate) => candidate.name === name);
   if (celebration === undefined) return;
   const plan = planPackCelebration(celebration, getPackImageUrls(), getGifPreloader().hasReady());
+  const extras = {
+    gifUrl: plan.useGif ? getGifPreloader().takeReady() : null,
+    pictureUrl: plan.pictureUrl,
+  };
+  if (celebration.clip) {
+    playClipCelebration(name, celebration.clip, extras);
+    return;
+  }
+  // A picture-only celebration borrows a built-in celebration's sound.
   try {
-    const context = unlockAudioContext();
-    if (celebration.clip) playClip(context, celebration.clip, { startSeconds: 0, lengthSeconds: celebration.clip.duration });
-    else if (plan.builtInSound) playCelebrationSound(plan.builtInSound, context);
+    if (plan.builtInSound) playCelebrationSound(plan.builtInSound, unlockAudioContext());
   } catch (error) {
     console.warn("[Celebration] Pack sound could not start:", error);
   }
-  const clipMs = celebration.clip ? celebration.clip.duration * 1000 + CUSTOM_EXTRA_MS : 0;
-  showCelebration(name, {
-    gifUrl: plan.useGif ? getGifPreloader().takeReady() : null,
-    pictureUrl: plan.pictureUrl,
-    durationMs: Math.max(clipMs, MIN_CLIP_CELEBRATION_MS),
-  });
+  showCelebration(name, { ...extras, durationMs: MIN_CLIP_CELEBRATION_MS });
 }
 
 /**

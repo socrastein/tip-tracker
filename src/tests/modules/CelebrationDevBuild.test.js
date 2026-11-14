@@ -43,8 +43,8 @@ describe("celebration preview tools", () => {
     developmentScripts = buildAndReadScripts("development");
   }, 120_000);
 
-  // The sample pack's button text and a file name only the dev sample pack builds.
-  const SAMPLE_PACK_MARKERS = ["load sample pack", "picturealone.png"];
+  // The sample pack's button text and a celebration name only the dev sample pack builds.
+  const SAMPLE_PACK_MARKERS = ["load sample pack", "Picture alone"];
 
   it("are present in a development build (so this check can tell the difference)", () => {
     expect(developmentScripts).toContain(PREVIEW_MARKER);

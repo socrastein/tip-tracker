@@ -1,46 +1,61 @@
-import { kindOfExtension } from "./CelebrationPackNames";
-import type { PackFileKind } from "./CelebrationPackNames";
-import { deletePackFile, loadStoredPackFiles, savePackFile } from "./CelebrationPackStore";
-import type { StoredPackFile } from "./CelebrationPackStore";
+import { deletePackCelebration, loadStoredPackCelebrations, savePackCelebration } from "./CelebrationPackStore";
+import type { StoredMedium, StoredPackCelebration } from "./CelebrationPackStore";
 import { recordPackSyncStatus } from "./CelebrationPackStatus";
 import type { PackSyncStatus } from "./CelebrationPackStatus";
+import { MAX_PACK_CLIP_SECONDS } from "./CelebrationClip";
 import { celebrationState } from "./CelebrationState";
 
 /**
- * Keeps the device's copy of the celebration pack in step with the folder on
- * the home server. BackupService calls it once the home server has proved it
- * is the home server (its health check), so there is no second polling loop.
+ * Keeps the device's copy of the celebration pack in step with the PUBLISHED
+ * celebrations on the home server. BackupService calls it once the home
+ * server has proved it is the home server (its health check), so there is no
+ * second polling loop.
  *
  * It is built to never get in the way:
  * - one file at a time, never while a celebration is on screen (it stops and
- *   the next hourly check carries on, since a file is stored only when it is
- *   complete and its hash matches, an interrupted download just starts over);
+ *   the next hourly check carries on);
+ * - a celebration is stored only when all its files are complete and match
+ *   the manifest's size and hash, so an interrupted download just starts over
+ *   and the phone never plays half a celebration;
  * - never throws, and any failure (offline, server error, full storage) just
  *   ends the run quietly;
  * - the caps below limit what is kept, and a full disk stops it politely.
  */
 
-/** Same caps as the server (pythonServer tipApp/celebrations.py): the phone is the second line of defence. */
+/** Same caps as the server (pythonServer tipApp/celebration_store.py): the phone is the second line of defence. */
 export const PACK_MAX_FILE_BYTES = 8 * 1024 * 1024;
 export const PACK_MAX_TOTAL_BYTES = 40 * 1024 * 1024;
 
 const MANIFEST_TIMEOUT_MS = 10_000;
 const DOWNLOAD_TIMEOUT_MS = 60_000;
-const STORAGE_MARGIN_FACTOR = 2; // keep room for twice a file before downloading it
+const STORAGE_MARGIN_FACTOR = 2; // keep room for twice a celebration's files before downloading it
 const SHA256_HEX = /^[0-9a-f]{64}$/;
-// Same shape the server accepts: no slashes, so a name can only be a file in the pack folder.
-const SAFE_NAME = /^[A-Za-z0-9][A-Za-z0-9 ._@+()-]{0,120}\.[A-Za-z0-9]{1,5}$/;
+const SAFE_ID = /^[0-9a-f]{12}$/;
+const MAX_START_SECONDS = 3600;
+const MAX_NAME_LENGTH = 60;
 
-export interface ManifestFile {
-  name: string;
-  kind: PackFileKind;
+export type MediumSlot = "sound" | "picture";
+const SLOTS: MediumSlot[] = ["sound", "picture"];
+
+/** What the manifest says about one medium. */
+export interface ManifestMedium {
   size: number;
   sha256: string;
 }
 
+/** One published celebration as the server's manifest lists it. */
+export interface ManifestCelebration {
+  id: string;
+  name: string;
+  startSeconds: number;
+  lengthSeconds: number;
+  sound: ManifestMedium | null;
+  picture: ManifestMedium | null;
+}
+
 export interface SyncPlan {
-  toDelete: string[]; // stored files the server no longer lists
-  toDownload: ManifestFile[]; // new files and files whose hash changed, in manifest order
+  toDelete: string[]; // stored celebrations the server no longer publishes
+  toSync: ManifestCelebration[]; // new or changed celebrations, in manifest order
 }
 
 export interface SyncResult {
@@ -55,9 +70,9 @@ export interface PackSyncDependencies {
   serverUrl: string;
   fetchWithTimeout: (url: string, timeoutMs: number) => Promise<Response>;
   store?: {
-    load: () => Promise<StoredPackFile[]>;
-    save: (file: StoredPackFile) => Promise<void>;
-    remove: (name: string) => Promise<void>;
+    load: () => Promise<StoredPackCelebration[]>;
+    save: (celebration: StoredPackCelebration) => Promise<void>;
+    remove: (id: string) => Promise<void>;
   };
   isPaused?: () => boolean;
   hasRoomFor?: (bytes: number) => Promise<boolean>;
@@ -68,61 +83,108 @@ export interface PackSyncDependencies {
 
 let isSyncing = false;
 
-/** True when a manifest entry has a safe name, a matching kind, a sane size and a real SHA-256. */
-function isValidManifestFile(entry: unknown): entry is ManifestFile {
-  if (typeof entry !== "object" || entry === null) return false;
-  const file = entry as Partial<ManifestFile>;
-  if (typeof file.name !== "string" || !SAFE_NAME.test(file.name) || file.name.includes("..")) return false;
-  const kind = kindOfExtension(file.name.slice(file.name.lastIndexOf(".") + 1).toLowerCase());
+/** True for a medium entry with a sane size and a real SHA-256 (or null, meaning none). */
+function isValidMedium(value: unknown): value is ManifestMedium | null {
+  if (value === null) return true;
+  if (typeof value !== "object") return false;
+  const medium = value as Partial<ManifestMedium>;
   return (
-    kind !== null &&
-    kind === file.kind &&
-    typeof file.size === "number" &&
-    Number.isInteger(file.size) &&
-    file.size > 0 &&
-    typeof file.sha256 === "string" &&
-    SHA256_HEX.test(file.sha256)
+    typeof medium.size === "number" &&
+    Number.isInteger(medium.size) &&
+    medium.size > 0 &&
+    typeof medium.sha256 === "string" &&
+    SHA256_HEX.test(medium.sha256)
+  );
+}
+
+/** True for a celebration entry with a safe id, sane times, and at least one medium. */
+function isValidCelebration(entry: unknown): entry is ManifestCelebration {
+  if (typeof entry !== "object" || entry === null) return false;
+  const value = entry as Partial<ManifestCelebration>;
+  return (
+    typeof value.id === "string" &&
+    SAFE_ID.test(value.id) &&
+    typeof value.name === "string" &&
+    value.name.length > 0 &&
+    value.name.length <= MAX_NAME_LENGTH &&
+    typeof value.startSeconds === "number" &&
+    value.startSeconds >= 0 &&
+    value.startSeconds <= MAX_START_SECONDS &&
+    typeof value.lengthSeconds === "number" &&
+    value.lengthSeconds > 0 &&
+    value.lengthSeconds <= MAX_PACK_CLIP_SECONDS &&
+    isValidMedium(value.sound ?? null) &&
+    isValidMedium(value.picture ?? null) &&
+    (value.sound ?? value.picture) != null
   );
 }
 
 /**
- * The usable files of a manifest response body.
+ * The usable celebrations of a manifest response body.
  * @returns the valid entries (invalid ones dropped), or null when the body is not a manifest at all
  */
-export function parseManifest(body: unknown): ManifestFile[] | null {
-  const files = (body as { files?: unknown } | null)?.files;
-  if (!Array.isArray(files)) return null;
-  return files.filter(isValidManifestFile);
+export function parseManifest(body: unknown): ManifestCelebration[] | null {
+  const celebrations = (body as { celebrations?: unknown } | null)?.celebrations;
+  if (!Array.isArray(celebrations)) return null;
+  return celebrations.filter(isValidCelebration).map((entry) => ({
+    ...entry,
+    sound: entry.sound ?? null,
+    picture: entry.picture ?? null,
+  }));
+}
+
+/** The media a manifest celebration has, as [slot, medium] pairs. */
+function mediaOf(celebration: ManifestCelebration): [MediumSlot, ManifestMedium][] {
+  return SLOTS.flatMap((slot) =>
+    celebration[slot] ? [[slot, celebration[slot] as ManifestMedium] as [MediumSlot, ManifestMedium]] : [],
+  );
+}
+
+function totalSize(celebration: ManifestCelebration): number {
+  return mediaOf(celebration).reduce((sum, [, medium]) => sum + medium.size, 0);
+}
+
+/** Whether the device already holds exactly what the manifest says (same text, times and file hashes). */
+function isUpToDate(manifest: ManifestCelebration, stored: StoredPackCelebration | undefined): boolean {
+  if (stored === undefined) return false;
+  return (
+    stored.name === manifest.name &&
+    stored.startSeconds === manifest.startSeconds &&
+    stored.lengthSeconds === manifest.lengthSeconds &&
+    SLOTS.every((slot) => (stored[slot]?.sha256 ?? null) === (manifest[slot]?.sha256 ?? null))
+  );
 }
 
 /**
- * Decide what to delete and what to download.
- * - Stored files missing from the manifest are deleted.
- * - A manifest file that is new, or stored with a different hash, is downloaded.
- * - A file over the per-file cap is never downloaded; once the files that
- *   will be kept plus those chosen reach the total cap, later ones are left out.
- * @param manifest  the server's valid files
+ * Decide what to delete and what to sync.
+ * - Stored celebrations the manifest no longer lists are deleted.
+ * - A manifest celebration that is new, or differs from the stored one, is synced.
+ * - One with a file over the per-file cap is never synced; once the
+ *   celebrations kept as they are plus those chosen reach the total cap,
+ *   later ones are left out.
+ * @param manifest  the server's valid, published celebrations
  * @param stored  what is on the device now
  * @param caps  the per-file and total caps in bytes
  */
 export function planSync(
-  manifest: ManifestFile[],
-  stored: Pick<StoredPackFile, "name" | "sha256">[],
+  manifest: ManifestCelebration[],
+  stored: StoredPackCelebration[],
   caps: { maxFileBytes: number; maxTotalBytes: number },
 ): SyncPlan {
-  const manifestNames = new Set(manifest.map((file) => file.name));
-  const storedHashes = new Map(stored.map((file) => [file.name, file.sha256]));
-  const toDelete = stored.filter((file) => !manifestNames.has(file.name)).map((file) => file.name);
-  const upToDate = manifest.filter((file) => storedHashes.get(file.name) === file.sha256);
-  let totalBytes = upToDate.reduce((sum, file) => sum + file.size, 0);
-  const toDownload: ManifestFile[] = [];
-  for (const file of manifest) {
-    if (storedHashes.get(file.name) === file.sha256) continue;
-    if (file.size > caps.maxFileBytes || totalBytes + file.size > caps.maxTotalBytes) continue;
-    totalBytes += file.size;
-    toDownload.push(file);
+  const storedById = new Map(stored.map((celebration) => [celebration.id, celebration]));
+  const listed = new Set(manifest.map((celebration) => celebration.id));
+  const toDelete = stored.filter((celebration) => !listed.has(celebration.id)).map((celebration) => celebration.id);
+  const upToDate = manifest.filter((celebration) => isUpToDate(celebration, storedById.get(celebration.id)));
+  let totalBytes = upToDate.reduce((sum, celebration) => sum + totalSize(celebration), 0);
+  const toSync: ManifestCelebration[] = [];
+  for (const celebration of manifest) {
+    if (isUpToDate(celebration, storedById.get(celebration.id))) continue;
+    const hasOversizedFile = mediaOf(celebration).some(([, medium]) => medium.size > caps.maxFileBytes);
+    if (hasOversizedFile || totalBytes + totalSize(celebration) > caps.maxTotalBytes) continue;
+    totalBytes += totalSize(celebration);
+    toSync.push(celebration);
   }
-  return { toDelete, toDownload };
+  return { toDelete, toSync };
 }
 
 /** The SHA-256 of a blob as lower-case hex, the same form the server's manifest uses. */
@@ -131,7 +193,7 @@ export async function sha256Hex(blob: Blob): Promise<string> {
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-/** True unless the browser reports too little free storage for a file of this size. */
+/** True unless the browser reports too little free storage for this many bytes. */
 async function browserHasRoomFor(bytes: number): Promise<boolean> {
   try {
     const estimate = await navigator.storage?.estimate?.();
@@ -142,111 +204,161 @@ async function browserHasRoomFor(bytes: number): Promise<boolean> {
   }
 }
 
-/** Whether an error is the browser saying storage is full. */
 function isQuotaError(error: unknown): boolean {
   return error instanceof Error && error.name === "QuotaExceededError";
 }
 
-/** Download one file; null unless the whole file arrived and matches the manifest's size and hash. */
-async function downloadVerified(file: ManifestFile, dependencies: PackSyncDependencies): Promise<Blob | null> {
-  const url = `${dependencies.serverUrl}/tipApp/celebrations/${encodeURIComponent(file.name)}`;
+/** Download one medium; null unless the whole file arrived and matches the manifest's size and hash. */
+async function downloadVerified(
+  url: string,
+  medium: ManifestMedium,
+  dependencies: PackSyncDependencies,
+): Promise<StoredMedium | null> {
   const response = await dependencies.fetchWithTimeout(url, DOWNLOAD_TIMEOUT_MS);
   if (!response.ok) return null;
   const blob = await response.blob();
-  const isComplete = blob.size === file.size && (await sha256Hex(blob)) === file.sha256;
-  return isComplete ? blob : null;
+  const isComplete = blob.size === medium.size && (await sha256Hex(blob)) === medium.sha256;
+  return isComplete ? { size: medium.size, sha256: medium.sha256, blob } : null;
 }
 
-/** What happened to one planned file. */
-type FileOutcome = "added" | "updated" | "skipped" | "paused" | "storage-full" | "network";
+/** Why a celebration's sync did not finish (other than "skipped", which concerns that celebration alone). */
+type StopReason = "paused" | "storage-full" | "network" | "skipped";
+
+/** The result of getting one medium: the medium, or the reason to stop. */
+type MediumStep = { medium: StoredMedium } | { stop: StopReason };
 
 /**
- * Download and store one file. Stops the whole run (paused, storage-full or
- * network) or reports "skipped" when only this file failed its size or hash
- * check, which is retried at the next check.
+ * Get one medium: the stored copy when its hash still matches, otherwise a
+ * verified download (unless a celebration is on screen, or there is no room).
  */
-async function downloadOne(
-  file: ManifestFile,
-  isUpdate: boolean,
+async function obtainMedium(
+  request: { celebrationId: string; slot: MediumSlot; wanted: ManifestMedium },
+  kept: StoredMedium | null | undefined,
   dependencies: Required<PackSyncDependencies>,
-): Promise<FileOutcome> {
-  if (dependencies.isPaused()) return "paused";
-  if (!(await dependencies.hasRoomFor(file.size))) return "storage-full";
+): Promise<MediumStep> {
+  const { celebrationId, slot, wanted } = request;
+  if (kept && kept.sha256 === wanted.sha256) return { medium: kept };
+  if (dependencies.isPaused()) return { stop: "paused" };
+  if (!(await dependencies.hasRoomFor(wanted.size))) return { stop: "storage-full" };
+  const url = `${dependencies.serverUrl}/tipApp/celebrations/media/${celebrationId}/${slot}`;
+  const medium = await downloadVerified(url, wanted, dependencies);
+  // A bad download skips this celebration only: it is tried again at the next check.
+  return medium === null ? { stop: "skipped" } : { medium };
+}
+
+/** All of a celebration's media, fetched one at a time; or the reason that ended it. */
+async function obtainAllMedia(
+  manifest: ManifestCelebration,
+  stored: StoredPackCelebration | undefined,
+  dependencies: Required<PackSyncDependencies>,
+): Promise<{ media: Record<MediumSlot, StoredMedium | null> } | { stop: StopReason }> {
+  const media: Record<MediumSlot, StoredMedium | null> = { sound: null, picture: null };
+  for (const [slot, wanted] of mediaOf(manifest)) {
+    const step = await obtainMedium({ celebrationId: manifest.id, slot, wanted }, stored?.[slot], dependencies);
+    if ("stop" in step) return step;
+    media[slot] = step.medium;
+  }
+  return { media };
+}
+
+/**
+ * Bring one celebration up to date: get its media, then store the whole
+ * record at once (never half a celebration).
+ * @returns "added" or "updated", or the reason it did not finish
+ */
+async function syncOne(
+  manifest: ManifestCelebration,
+  stored: StoredPackCelebration | undefined,
+  dependencies: Required<PackSyncDependencies>,
+): Promise<"added" | "updated" | StopReason> {
   try {
-    const blob = await downloadVerified(file, dependencies);
-    if (blob === null) return "skipped";
-    await dependencies.store.save({ name: file.name, kind: file.kind, size: file.size, sha256: file.sha256, blob });
-    return isUpdate ? "updated" : "added";
+    const result = await obtainAllMedia(manifest, stored, dependencies);
+    if ("stop" in result) return result.stop;
+    const { id, name, startSeconds, lengthSeconds } = manifest;
+    await dependencies.store.save({ id, name, startSeconds, lengthSeconds, ...result.media });
+    return stored === undefined ? "added" : "updated";
   } catch (error) {
     return isQuotaError(error) ? "storage-full" : "network";
   }
 }
 
+/** What a run of syncOne calls achieved, and why it ended. */
+type SyncProgress = Pick<SyncResult, "added" | "updated" | "stoppedBecause">;
+
 /**
- * Download the planned files one at a time, recording what changed.
- * @returns why it stopped: "finished" when every file was handled, or
- *   "paused" (a celebration started), "storage-full" or "network" (it
- *   simply ends; the next check carries on)
+ * Sync the planned celebrations one at a time.
+ * @returns what was added or updated, and why it stopped: "finished" when all
+ *   were handled, or "paused" (a celebration started), "storage-full" or
+ *   "network" (it simply ends; the next check carries on)
  */
-async function downloadFiles(
-  plan: SyncPlan,
-  storedNames: Set<string>,
+async function syncCelebrations(
+  toSync: ManifestCelebration[],
+  storedById: Map<string, StoredPackCelebration>,
   dependencies: Required<PackSyncDependencies>,
-  result: SyncResult,
-): Promise<SyncResult["stoppedBecause"]> {
-  for (const file of plan.toDownload) {
-    const outcome = await downloadOne(file, storedNames.has(file.name), dependencies);
-    if (outcome === "added") result.added.push(file.name);
-    else if (outcome === "updated") result.updated.push(file.name);
-    else if (outcome !== "skipped") return outcome;
+): Promise<SyncProgress> {
+  const progress: SyncProgress = { added: [], updated: [], stoppedBecause: "finished" };
+  for (const celebration of toSync) {
+    const outcome = await syncOne(celebration, storedById.get(celebration.id), dependencies);
+    if (outcome === "added") progress.added.push(celebration.id);
+    else if (outcome === "updated") progress.updated.push(celebration.id);
+    else if (outcome !== "skipped") return { ...progress, stoppedBecause: outcome };
   }
-  return "finished";
+  return progress;
 }
 
 /** Fetch the manifest; null when the server did not give a usable one. */
-async function fetchManifest(dependencies: PackSyncDependencies): Promise<ManifestFile[] | null> {
+async function fetchManifest(dependencies: PackSyncDependencies): Promise<ManifestCelebration[] | null> {
   const response = await dependencies.fetchWithTimeout(`${dependencies.serverUrl}/tipApp/celebrations`, MANIFEST_TIMEOUT_MS);
   return response.ok ? parseManifest(await response.json()) : null;
 }
 
 /**
- * Apply a manifest: delete what the server dropped, then download what is new or changed.
- * @param reportFileCount  told how many pack files the device holds once done
+ * Apply a manifest: delete what the server no longer publishes, then sync what is new or changed.
+ * @param reportCount  told how many celebrations the device holds once done
  */
-async function syncFiles(
-  manifest: ManifestFile[],
+async function syncAgainstManifest(
+  manifest: ManifestCelebration[],
   dependencies: Required<PackSyncDependencies>,
   result: SyncResult,
-  reportFileCount: (count: number) => void,
+  reportCount: (count: number) => void,
 ): Promise<void> {
   const stored = await dependencies.store.load();
-  let fileCount = stored.length;
-  reportFileCount(fileCount);
+  let count = stored.length;
+  reportCount(count);
   const plan = planSync(manifest, stored, dependencies.caps);
-  for (const name of plan.toDelete) {
-    await dependencies.store.remove(name);
-    result.removed.push(name);
-    reportFileCount(--fileCount);
+  for (const id of plan.toDelete) {
+    await dependencies.store.remove(id);
+    result.removed.push(id);
+    reportCount(--count);
   }
-  result.stoppedBecause = await downloadFiles(plan, new Set(stored.map((file) => file.name)), dependencies, result);
-  reportFileCount(fileCount + result.added.length);
+  const storedById = new Map(stored.map((celebration) => [celebration.id, celebration]));
+  const progress = await syncCelebrations(plan.toSync, storedById, dependencies);
+  Object.assign(result, progress); // added, updated and why it stopped
+  reportCount(count + result.added.length);
 }
 
 /** The given dependencies with the real store, pause rule, storage check and limits filled in. */
 function withDefaults(dependencies: PackSyncDependencies): Required<PackSyncDependencies> {
   return {
-    store: { load: loadStoredPackFiles, save: savePackFile, remove: deletePackFile },
+    store: {
+      load: loadStoredPackCelebrations,
+      save: savePackCelebration,
+      remove: deletePackCelebration,
+    },
     isPaused: () => celebrationState.current !== null,
     hasRoomFor: browserHasRoomFor,
     onChanged: () => {},
     recordStatus: recordPackSyncStatus,
-    caps: { maxFileBytes: PACK_MAX_FILE_BYTES, maxTotalBytes: PACK_MAX_TOTAL_BYTES },
+    caps: {
+      maxFileBytes: PACK_MAX_FILE_BYTES,
+      maxTotalBytes: PACK_MAX_TOTAL_BYTES,
+    },
     ...dependencies,
   };
 }
 
 /** Hand the menu's status line what this sync achieved (a failure to record is ignored). */
-function reportOutcome(result: SyncResult, fileCount: number, record: (status: PackSyncStatus) => void): void {
+function reportOutcome(result: SyncResult, count: number, record: (status: PackSyncStatus) => void): void {
   if (result.stoppedBecause === "already-running") return;
   const outcomes: Record<Exclude<SyncResult["stoppedBecause"], "already-running">, PackSyncStatus["outcome"]> = {
     finished: "ok",
@@ -256,39 +368,56 @@ function reportOutcome(result: SyncResult, fileCount: number, record: (status: P
     "no-manifest": "no-server-pack",
   };
   try {
-    record({ time: new Date().toISOString(), fileCount, outcome: outcomes[result.stoppedBecause] });
+    record({
+      time: new Date().toISOString(),
+      celebrationCount: count,
+      outcome: outcomes[result.stoppedBecause],
+    });
   } catch {
     // The status line is a convenience only.
   }
 }
 
-/**
- * Bring the device's pack in line with the server's. Never throws; runs at
- * most once at a time. Call it only after the home server has been verified.
- * @param dependencies  the server address, fetch, and (for tests) the store and limits
- */
-export async function syncCelebrationPack(dependencies: PackSyncDependencies): Promise<SyncResult> {
+/** Tell the app to re-prepare its pack, but only if this sync changed anything. */
+function notifyIfChanged(result: SyncResult, onChanged: () => void): void {
+  if (result.added.length + result.updated.length + result.removed.length === 0) return;
+  try {
+    onChanged();
+  } catch {
+    // A failure refreshing the in-memory pack must not look like a sync failure.
+  }
+}
+
+/** Run one sync against the server; returns how it went and how many celebrations the device holds. */
+async function runSync(resolved: Required<PackSyncDependencies>): Promise<{ result: SyncResult; count: number }> {
   const result: SyncResult = { added: [], updated: [], removed: [], stoppedBecause: "finished" };
-  let fileCount = 0; // pack files on the device once the sync is done
-  if (isSyncing) return { ...result, stoppedBecause: "already-running" };
-  isSyncing = true;
-  const resolved = withDefaults(dependencies);
+  let count = 0; // celebrations on the device once the sync is done
   try {
     const manifest = await fetchManifest(resolved);
     if (manifest === null) result.stoppedBecause = "no-manifest";
-    else await syncFiles(manifest, resolved, result, (count) => (fileCount = count));
+    else await syncAgainstManifest(manifest, resolved, result, (newCount) => (count = newCount));
   } catch {
     result.stoppedBecause = "network"; // offline, timed out, or storage unreadable: quietly end
+  }
+  return { result, count };
+}
+
+/**
+ * Bring the device's pack in line with the server's published celebrations.
+ * Never throws; runs at most once at a time. Call it only after the home
+ * server has been verified.
+ * @param dependencies  the server address, fetch, and (for tests) the store and limits
+ */
+export async function syncCelebrationPack(dependencies: PackSyncDependencies): Promise<SyncResult> {
+  if (isSyncing) return { added: [], updated: [], removed: [], stoppedBecause: "already-running" };
+  isSyncing = true;
+  const resolved = withDefaults(dependencies);
+  try {
+    const { result, count } = await runSync(resolved);
+    reportOutcome(result, count, resolved.recordStatus);
+    notifyIfChanged(result, resolved.onChanged);
+    return result;
   } finally {
     isSyncing = false;
   }
-  reportOutcome(result, fileCount, resolved.recordStatus);
-  if (result.added.length + result.updated.length + result.removed.length > 0) {
-    try {
-      resolved.onChanged();
-    } catch {
-      // A failure refreshing the in-memory pack must not look like a sync failure.
-    }
-  }
-  return result;
 }

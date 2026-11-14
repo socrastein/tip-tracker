@@ -2,8 +2,8 @@ import { BUILT_IN_CELEBRATIONS } from "./CelebrationRotation";
 import type { PreparedPackCelebration } from "./CelebrationPackRuntime";
 
 /**
- * Decides what a pack celebration shows and sounds like, following the
- * pairing rule (see CelebrationPackNames.ts). Pure: the random source is
+ * Decides what a pack celebration shows and sounds like when it lacks a
+ * sound or a picture (see planPackCelebration). Pure: the random source is
  * injected so tests are deterministic.
  */
 

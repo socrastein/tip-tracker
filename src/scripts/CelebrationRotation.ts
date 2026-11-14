@@ -15,7 +15,7 @@ export const BUILT_IN_CELEBRATIONS = [
 /** The owner's own celebration, which exists only once its media is set up on the device. */
 export const CUSTOM_CELEBRATION = "custom" as const;
 
-/** A celebration made from the home server's pack, named "pack:" plus its base file name. */
+/** A celebration made from the home server's pack, named "pack:" plus its id on the server. */
 export type PackCelebrationName = `pack:${string}`;
 
 export type CelebrationName =

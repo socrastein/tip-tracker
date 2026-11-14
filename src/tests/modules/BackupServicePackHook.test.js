@@ -74,30 +74,30 @@ describe("pack sync status line", () => {
   beforeEach(() => localStorage.clear());
 
   it("remembers and describes the last result", () => {
-    recordPackSyncStatus({ time: "2026-11-13T18:40:00.000Z", fileCount: 3, outcome: "ok" });
+    recordPackSyncStatus({ time: "2026-11-13T18:40:00.000Z", celebrationCount: 3, outcome: "ok" });
     const status = getPackSyncStatus();
-    expect(status.fileCount).toBe(3);
-    expect(describePackSyncStatus(status)).toMatch(/^Pack: 3 files, /);
+    expect(status.celebrationCount).toBe(3);
+    expect(describePackSyncStatus(status)).toMatch(/^Pack: 3 celebrations, /);
   });
 
   it("says why a sync failed", () => {
-    const base = { time: "2026-11-13T18:40:00.000Z", fileCount: 1 };
+    const base = { time: "2026-11-13T18:40:00.000Z", celebrationCount: 1 };
     expect(describePackSyncStatus({ ...base, outcome: "network" })).toContain("could not reach the server");
     expect(describePackSyncStatus({ ...base, outcome: "storage-full" })).toContain("storage full");
     expect(describePackSyncStatus({ ...base, outcome: "no-server-pack" })).toContain("server gave no pack");
-    expect(describePackSyncStatus({ ...base, outcome: "ok" })).toMatch(/^Pack: 1 file, /);
+    expect(describePackSyncStatus({ ...base, outcome: "ok" })).toMatch(/^Pack: 1 celebration, /);
   });
 
   it("is empty when nothing is stored or the record is damaged", () => {
     expect(getPackSyncStatus()).toBeNull();
     localStorage.setItem("tipTracker(pack).lastSync", "{broken");
     expect(getPackSyncStatus()).toBeNull();
-    localStorage.setItem("tipTracker(pack).lastSync", JSON.stringify({ time: "nope", fileCount: 1, outcome: "ok" }));
+    localStorage.setItem("tipTracker(pack).lastSync", JSON.stringify({ time: "nope", celebrationCount: 1, outcome: "ok" }));
     expect(getPackSyncStatus()).toBeNull();
   });
 
   it("uses a key that the tip loader never reads", () => {
-    recordPackSyncStatus({ time: "2026-11-13T18:40:00.000Z", fileCount: 3, outcome: "ok" });
+    recordPackSyncStatus({ time: "2026-11-13T18:40:00.000Z", celebrationCount: 3, outcome: "ok" });
     expect(TipRepository.loadAllFromStorage()).toEqual([]);
   });
 });

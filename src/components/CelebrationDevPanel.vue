@@ -10,7 +10,7 @@ import { availableCelebrations, playCelebration } from "../scripts/BigTipCelebra
 import { BUILT_IN_CELEBRATIONS, CUSTOM_CELEBRATION } from "../scripts/CelebrationRotation";
 import { getGifPreloader } from "../scripts/GifPreloader";
 import { getPackCelebrations, preparePackCelebrations } from "../scripts/CelebrationPackRuntime";
-import { buildSamplePackFiles } from "./CelebrationDevSamplePack";
+import { buildSamplePackCelebrations } from "./CelebrationDevSamplePack";
 import type { CelebrationName } from "../scripts/CelebrationRotation";
 
 // A stand-in for a provider GIF so the layout can be judged without an API key:
@@ -44,7 +44,7 @@ function refreshCustomReady(): void {
 
 /** Load the made-up sample pack (nothing is downloaded or stored) so pack celebrations can be previewed. */
 async function loadSamplePack(): Promise<void> {
-  await preparePackCelebrations(await buildSamplePackFiles());
+  await preparePackCelebrations(await buildSamplePackCelebrations());
   refreshCustomReady();
 }
 

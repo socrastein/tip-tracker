@@ -17,4 +17,20 @@ When a big tip is logged, some celebrations can show a random family-safe GIF (a
 
 ## Private celebration pack (optional)
 
-Songs, GIFs and pictures for the big-tip celebrations are not in this repository. They live in a folder on the owner's home server and are downloaded quietly to the phone whenever it reaches that server (the same hourly check that backs up the tips). Once downloaded they work with no network. How to add or remove one, the file-name rules and the size limits are in the home server's README (`pythonServer`, "Tip Tracker celebration pack"). The menu shows a "Pack: N files, ..." line with the last result. On the dev server, the preview panel's "load sample pack" button loads made-up files so pack celebrations can be previewed.
+Songs and pictures for the big-tip celebrations are not in this repository. The owner creates, previews and edits them in the tip console, and a celebration reaches the phone only after he publishes it there. The phone asks the home server for its published celebrations (the same hourly check that backs up the tips), downloads what is new or changed (each file's size and SHA-256 are checked against the server's list before it is kept), and removes any that were unpublished or deleted. A celebration is stored whole or not at all, so the phone never plays half of one. Once downloaded they work with no network, and they are kept outside the tip backup. The server's routes, size limits and caps are in the home server's README (`pythonServer`, "Tip Tracker celebration pack"). The menu shows a "Pack: N celebrations, ..." line with the last result. On the dev server, the preview panel's "load sample pack" button loads three made-up celebrations so pack celebrations can be previewed.
+
+A celebration has an id, a name, an optional sound with a start time and a clip length (at most 15 seconds, the constant `MAX_PACK_CLIP_SECONDS`), and an optional picture. A sound alone gets a random pack picture (or the GIF, or just the falling bills); a picture alone gets a built-in celebration's sound.
+
+### Files the tip console copies
+
+The console previews celebrations with the same code the phone plays them with. These files are copied verbatim into the console (never edited there); change them here first:
+
+- `src/scripts/CelebrationClip.ts` (cut a sound to its clip, play a clip celebration)
+- `src/scripts/CelebrationState.ts`, `CelebrationParticles.ts`, `CelebrationSounds.ts`, `CustomCelebrationAudio.ts`, `CelebrationRotation.ts` and `BigTipRule.ts` (what the overlay and the clip player import)
+- `src/components/CelebrationOverlay.vue` (it is `position: fixed`; the console puts it inside a frame with `transform: translateZ(0)`, which makes a fixed child fill the frame instead of the window)
+
+## How the Phone Reaches the Home Server
+
+The app is served over HTTPS (GitHub Pages) and the home server speaks plain HTTP on the LAN (`http://192.168.0.2:5000`). A page on HTTPS normally may not call plain HTTP ("mixed content"). Chrome makes an exception for a request to a private IP address written as a literal, and since Chrome 142 asks the user once for the "local network access" permission; after that the phone's backups and the celebration sync go through. The evidence that it works is in the server itself: its journal shows the phone's POSTs (each preceded by an OPTIONS preflight, which the server answers with the Private Network Access headers) and the archive folder holds a long series of backups that only a page loaded from the deployed app could have made.
+
+Safari on iOS has no such exemption: it blocks the request, so on an iPhone the backup and the pack sync would silently fail (the menu's "Last saved" and "Pack" lines would show it). This works because the owner's wife uses Chrome on Android; if that ever changes, the server needs HTTPS with a certificate the phone trusts.

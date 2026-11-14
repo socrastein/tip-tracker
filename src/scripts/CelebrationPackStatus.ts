@@ -1,7 +1,7 @@
 /**
  * The last result of the celebration pack sync, kept for the menu's status
  * line (next to "Last saved") so the owner can see whether packs are arriving.
- * Only a time, a file count and a short reason are stored: no pack content
+ * Only a time, a celebration count and a short reason are stored: no pack content
  * and nothing that could be mistaken for a tip (the key is outside the tip prefix).
  */
 
@@ -9,7 +9,7 @@ const STATUS_KEY = "tipTracker(pack).lastSync";
 
 export interface PackSyncStatus {
   time: string; // ISO time of the sync
-  fileCount: number; // pack files on the device after it
+  celebrationCount: number; // celebrations on the device after it
   outcome: "ok" | "no-server-pack" | "network" | "storage-full" | "paused";
 }
 
@@ -31,7 +31,7 @@ export function getPackSyncStatus(): PackSyncStatus | null {
     const isValid =
       typeof parsed.time === "string" &&
       !Number.isNaN(new Date(parsed.time).getTime()) &&
-      typeof parsed.fileCount === "number" &&
+      typeof parsed.celebrationCount === "number" &&
       typeof parsed.outcome === "string";
     return isValid ? (parsed as PackSyncStatus) : null;
   } catch {
@@ -39,12 +39,18 @@ export function getPackSyncStatus(): PackSyncStatus | null {
   }
 }
 
-/** The status as one short line for the menu, for example "Pack: 3 files, Nov 13 @ 11:40 AM". */
+/** The status as one short line for the menu, for example "Pack: 3 celebrations, Nov 13 @ 11:40 AM". */
 export function describePackSyncStatus(status: PackSyncStatus): string {
   const time = new Date(status.time);
-  const day = time.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  const clock = time.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-  const files = `${status.fileCount} ${status.fileCount === 1 ? "file" : "files"}`;
+  const day = time.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+  const clock = time.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const celebrations = `${status.celebrationCount} ${status.celebrationCount === 1 ? "celebration" : "celebrations"}`;
   const problems: Record<PackSyncStatus["outcome"], string> = {
     ok: "",
     paused: "",
@@ -52,5 +58,5 @@ export function describePackSyncStatus(status: PackSyncStatus): string {
     network: ", could not reach the server",
     "storage-full": ", storage full",
   };
-  return `Pack: ${files}, ${day} @ ${clock}${problems[status.outcome]}`;
+  return `Pack: ${celebrations}, ${day} @ ${clock}${problems[status.outcome]}`;
 }

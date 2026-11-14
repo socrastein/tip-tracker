@@ -248,11 +248,17 @@ function drawParticles(context: CanvasRenderingContext2D, state: ShowState): voi
   }
 }
 
-/** Size the canvas backing store for the screen's pixel density. */
+/**
+ * Size the canvas backing store for the screen's pixel density. The show
+ * fills the canvas as laid out (the whole screen on the phone, a phone-shaped
+ * frame in the console's preview); a canvas with no layout size (tests) falls
+ * back to the window.
+ */
 function fitCanvas(canvas: HTMLCanvasElement): { width: number; height: number } {
   const ratio = window.devicePixelRatio || 1;
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  const box = canvas.getBoundingClientRect();
+  const width = box.width > 0 ? box.width : window.innerWidth;
+  const height = box.height > 0 ? box.height : window.innerHeight;
   canvas.width = Math.round(width * ratio);
   canvas.height = Math.round(height * ratio);
   canvas.getContext("2d")?.setTransform(ratio, 0, 0, ratio, 0, 0);

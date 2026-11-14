@@ -4,7 +4,7 @@
  * dev server. Only CelebrationDevPanel.vue imports this, so none of it is
  * in the production build.
  */
-import type { PackFile } from "../scripts/CelebrationPackRuntime";
+import type { StoredMedium, StoredPackCelebration } from "../scripts/CelebrationPackStore";
 
 const SAMPLE_RATE = 22050;
 const NOTE_SECONDS = 0.25;
@@ -59,15 +59,28 @@ function drawPng(background: string): Promise<Blob> {
   return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob ?? new Blob()), "image/png"));
 }
 
-/**
- * The sample pack: one paired celebration, one sound alone and one picture alone.
- * "pair@0+2.wav" shows the start+length name rule too (2 seconds from 0 s).
- */
-export async function buildSamplePackFiles(): Promise<PackFile[]> {
+/** A blob as a stored medium (the hash is not checked for the dev pack, so it is left empty). */
+function medium(blob: Blob): StoredMedium {
+  return { size: blob.size, sha256: "", blob };
+}
+
+/** A made-up celebration whose clip is the first 2 seconds of its sound. */
+function sampleCelebration(id: string, name: string, media: { sound: Blob | null; picture: Blob | null }): StoredPackCelebration {
+  return {
+    id,
+    name,
+    startSeconds: 0,
+    lengthSeconds: 2,
+    sound: media.sound && medium(media.sound),
+    picture: media.picture && medium(media.picture),
+  };
+}
+
+/** The sample pack: one celebration with a sound and a picture, one with a sound alone and one with a picture alone. */
+export async function buildSamplePackCelebrations(): Promise<StoredPackCelebration[]> {
   return [
-    { name: "pair@0+2.wav", blob: melodyWav() },
-    { name: "pair.png", blob: await drawPng("#6a1b9a") },
-    { name: "soundalone.wav", blob: melodyWav() },
-    { name: "picturealone.png", blob: await drawPng("#00838f") },
+    sampleCelebration("aaaaaaaaaaaa", "Pair", { sound: melodyWav(), picture: await drawPng("#6a1b9a") }),
+    sampleCelebration("bbbbbbbbbbbb", "Sound alone", { sound: melodyWav(), picture: null }),
+    sampleCelebration("cccccccccccc", "Picture alone", { sound: null, picture: await drawPng("#00838f") }),
   ];
 }
