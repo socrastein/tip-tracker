@@ -1,4 +1,5 @@
 import { Tip } from "./ClassTip";
+import { BackupService } from "./BackupService";
 
 /**
  * Handles all localStorage logic for tips
@@ -79,19 +80,20 @@ export const TipRepository = {
     tip.deleteFromLocalStorage();
   },
 
-  exportTipsToJSON: function (tips: Tip[]) {
-    const valuesArray = [] as any[];
-    for (const tip of tips) {
-      const key = tip.storageKey;
-      const value = tip.storageValue;
-
-      const valuesObject = {
-        key: value,
-      };
-      valuesArray.push(valuesObject);
-    }
+  /**
+   * The tips as JSON text, in exactly the form the home server's archives use:
+   * a list of {amount, date, type, shift}, sorted by date then shift. It is
+   * BackupService's canonical backup payload, so one format serves both.
+   * Only reads the tips it is given: nothing is saved or changed.
+   * @param tips  the tips to export
+   * @returns the JSON text
+   */
+  exportTipsToJSON: function (tips: Tip[]): string {
+    return BackupService.buildTipsPayload(tips);
   },
 
+  // Importing is planned separately: it writes her data, so it needs its own
+  // careful design (validation, duplicates, a preview) and is deliberately not built yet.
   importTipsFromJSON: function (jsonString: string) {
     const tips = [] as Tip[];
 
@@ -101,5 +103,21 @@ export const TipRepository = {
   },
 
 
-  downloadJSONFile(tips: Tip[], filename?: string) {},
+  /**
+   * Save the tips as a JSON file through the browser's normal download.
+   * @param tips  the tips to save
+   * @param filename  the file name, for example "tips-2026-11-14.json"
+   */
+  downloadJSONFile(tips: Tip[], filename: string): void {
+    const file = new Blob([this.exportTipsToJSON(tips)], { type: "application/json" });
+    const address = URL.createObjectURL(file);
+    const link = document.createElement("a");
+    link.href = address;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    // Freed after the browser has had time to start the download.
+    setTimeout(() => URL.revokeObjectURL(address), 10_000);
+  },
 };
