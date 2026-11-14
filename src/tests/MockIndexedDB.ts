@@ -1,7 +1,7 @@
 /**
  * A tiny in-memory stand-in for the browser's IndexedDB, covering only what
- * CustomCelebrationStore uses: open with an upgrade step, one object store
- * with get, put and delete, and transactions that complete asynchronously.
+ * the celebration stores use: open with an upgrade step, one object store
+ * with get, getAll, put and delete, and transactions that complete asynchronously.
  * Values are kept as given (a real database would structured-clone them,
  * which keeps Blobs intact too).
  */
@@ -26,6 +26,15 @@ class FakeObjectStore {
     const request = new FakeRequest<unknown>();
     queueMicrotask(() => {
       request.result = this.records.get(key);
+      request.onsuccess?.();
+    });
+    return request;
+  }
+
+  getAll(): FakeRequest<unknown[]> {
+    const request = new FakeRequest<unknown[]>();
+    queueMicrotask(() => {
+      request.result = [...this.records.values()];
       request.onsuccess?.();
     });
     return request;
