@@ -1,13 +1,26 @@
 <script setup>
 import { RouterLink } from "vue-router";
 import ColorThemeMenu from "../components/ColorThemeMenu.vue";
+import { ref } from "vue";
 import { BackupService } from "../scripts/BackupService";
+import { describeExportResult, exportAllTips } from "../scripts/TipExporter";
+import { TipStore } from "../scripts/TipStore";
 
 const emit = defineEmits(["close"]);
 
 // This component is remounted each time the menu opens (v-if in NavBar),
 // so a plain read is always fresh.
 const lastBackup = BackupService.getLastBackupInfo();
+
+// What the last export did, in words (announced by screen readers); empty until one is made.
+const exportMessage = ref("");
+
+/** Export every tip. Runs straight from the click so phones allow the share sheet. */
+async function exportTips() {
+  exportMessage.value = "";
+  const result = await exportAllTips([...TipStore.getAllTips()]);
+  exportMessage.value = describeExportResult(result) ?? "";
+}
 
 function formatBackupTime(time) {
   const monthDay = time.toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -26,6 +39,8 @@ function formatBackupTime(time) {
         >Stats Page</router-link
       >
       <ColorThemeMenu />
+      <button type="button" class="menuItem exportButton" @click="exportTips">Export Tips</button>
+      <p class="exportMessage" role="status" aria-live="polite">{{ exportMessage }}</p>
       <div v-if="lastBackup" class="lastSaved">
         <span>Last saved: {{ lastBackup.count }} tips</span>
         <span>{{ formatBackupTime(lastBackup.time) }}</span>
@@ -68,6 +83,21 @@ function formatBackupTime(time) {
   border-radius: 0.5rem;
   background-color: var(--backgroundDark);
   font-weight: bold;
+}
+
+.exportButton {
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.exportMessage {
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+/* Empty, the message is taken out of the layout but stays in the page, so a screen reader still announces it when text arrives. */
+.exportMessage:empty {
+  position: absolute;
 }
 
 .lastSaved {
