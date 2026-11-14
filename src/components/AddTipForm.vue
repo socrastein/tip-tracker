@@ -5,6 +5,7 @@ import { useFocus } from "@vueuse/core";
 import { Tip } from "../scripts/ClassTip";
 import { getYearMonthDayString } from "../scripts/Dates";
 import { TipStore } from "../scripts/TipStore";
+import { celebrateIfBigTip } from "../scripts/BigTipCelebrator";
 
 import ErrorMessage from "./ErrorMessage.vue";
 import ConfirmationMessage from "./ConfirmationMessage.vue";
@@ -81,21 +82,26 @@ function isFormInputValid(targetTip) {
   return true;
 }
 
+/** A Tip built from what is currently typed into the form. */
+function createTipFromInputs() {
+  return new Tip(
+    inputAmount.value,
+    inputDate.value,
+    inputType.value,
+    inputShift.value
+  );
+}
+
 function confirmNewTip() {
   if (!isFormInputValid()) {
     return;
   }
 
   try {
-    const newTip = reactive(
-      new Tip(
-        inputAmount.value,
-        inputDate.value,
-        inputType.value,
-        inputShift.value
-      )
-    );
+    const newTip = reactive(createTipFromInputs());
     TipStore.addTip(newTip);
+    // The tip is stored; the celebration is cosmetic and cannot throw.
+    celebrateIfBigTip(undefined, newTip.amount);
     emit("close");
   } catch (error) {
     console.log(error);
@@ -110,12 +116,15 @@ function confirmEditTip() {
   }
 
   try {
+    const amountBeforeEdit = props.targetTip.amount;
     TipStore.editTip(props.targetTip, {
       amount: inputAmount.value,
       date: inputDate.value,
       type: inputType.value,
       shift: inputShift.value,
     });
+    // The edit is stored; celebrate only if it lifted the tip up to the big tip mark.
+    celebrateIfBigTip(amountBeforeEdit, inputAmount.value);
     emit("close");
   } catch (error) {
     console.log(error);

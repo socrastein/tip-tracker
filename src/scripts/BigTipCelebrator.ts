@@ -1,0 +1,95 @@
+import { shouldCelebrate } from "./BigTipRule";
+import {
+  BUILT_IN_CELEBRATIONS,
+  CUSTOM_CELEBRATION,
+  pickNextCelebration,
+} from "./CelebrationRotation";
+import type { CelebrationName } from "./CelebrationRotation";
+import { showCelebration } from "./CelebrationState";
+import { playCelebrationSound, unlockAudioContext } from "./CelebrationSounds";
+import { playClip } from "./CustomCelebrationAudio";
+import { getPreparedCustomCelebration } from "./CustomCelebrationRuntime";
+
+/**
+ * Starts the celebration after a big tip has been saved. Everything here is
+ * cosmetic: celebrateIfBigTip never throws, so it can never get in the way
+ * of saving a tip (the tip is stored before it is called).
+ */
+
+// Not under the tip key prefix, so the tip loader and the backup never see it.
+const LAST_CELEBRATION_KEY = "tipTracker(celebration).lastShown";
+
+/** The last celebration shown, remembered across launches so a restart does not repeat it. */
+function readLastCelebration(): CelebrationName | null {
+  try {
+    const stored = localStorage.getItem(LAST_CELEBRATION_KEY);
+    const known: string[] = [...BUILT_IN_CELEBRATIONS, CUSTOM_CELEBRATION];
+    return stored !== null && known.includes(stored) ? (stored as CelebrationName) : null;
+  } catch {
+    return null; // storage unavailable: just allow any celebration
+  }
+}
+
+function rememberLastCelebration(name: CelebrationName): void {
+  try {
+    localStorage.setItem(LAST_CELEBRATION_KEY, name);
+  } catch {
+    // Not remembering only means a repeat is possible: not worth failing for.
+  }
+}
+
+/** Every celebration that can play now: the built-ins, plus the custom one when set up. */
+export function availableCelebrations(): CelebrationName[] {
+  const custom = getPreparedCustomCelebration() ? [CUSTOM_CELEBRATION] : [];
+  return [...BUILT_IN_CELEBRATIONS, ...custom];
+}
+
+/**
+ * Play one celebration by name: sound first (inside the tap), then the visuals.
+ * Used by the rotation and by the dev-only preview.
+ * @param name  the celebration to play
+ */
+export function playCelebration(name: CelebrationName): void {
+  try {
+    startCelebrationSound(name);
+  } catch (error) {
+    // No sound (blocked or unsupported) must not cost the visuals.
+    console.warn("[Celebration] Sound could not start:", error);
+  }
+  showCelebration(name);
+}
+
+/** Start the sound for a celebration: the owner's clip or the synthesized score. */
+function startCelebrationSound(name: CelebrationName): void {
+  const context = unlockAudioContext();
+  if (name !== CUSTOM_CELEBRATION) {
+    playCelebrationSound(name, context);
+    return;
+  }
+  const custom = getPreparedCustomCelebration();
+  if (custom === null) return;
+  playClip(context, custom.buffer, custom.settings);
+}
+
+/**
+ * Celebrate if the saved tip earned it. Call it right after the tip has been
+ * stored, from inside the Confirm tap's handler (so sound is allowed).
+ * Failures are logged and swallowed.
+ * @param previousAmount  the tip's amount before this save, undefined for a new tip
+ * @param newAmount  the amount just saved
+ * @param play  how a chosen celebration is played (injectable for tests)
+ */
+export function celebrateIfBigTip(
+  previousAmount: number | undefined,
+  newAmount: number,
+  play: (name: CelebrationName) => void = playCelebration,
+): void {
+  try {
+    if (!shouldCelebrate(previousAmount, newAmount)) return;
+    const name = pickNextCelebration(availableCelebrations(), readLastCelebration());
+    rememberLastCelebration(name);
+    play(name);
+  } catch (error) {
+    console.error("[Celebration] Celebration failed, the tip was saved anyway:", error);
+  }
+}

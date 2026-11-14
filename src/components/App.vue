@@ -4,6 +4,7 @@ import { ref, onMounted } from "vue";
 
 import NavBar from "./NavBar.vue";
 import LoadingScreen from "./LoadingScreen.vue";
+import CelebrationOverlay from "./CelebrationOverlay.vue";
 
 import background from "../assets/photos/beachSunset.jpg";
 
@@ -25,6 +26,7 @@ onMounted(() => {
   <div v-if="isReady" class="mainDiv">
     <NavBar />
     <RouterView />
+    <CelebrationOverlay />
   </div>
   <LoadingScreen v-else />
 </template>
