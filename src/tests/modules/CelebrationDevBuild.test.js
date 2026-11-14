@@ -59,4 +59,12 @@ describe("celebration preview tools", () => {
   it("leave the celebrations themselves in the production build", () => {
     expect(productionScripts).toContain("tipTracker(celebration).lastShown");
   });
+
+  // The master switch's storage key: proves the gate is compiled into a production build,
+  // where import.meta.env.DEV is false, so the phone starts dark (CelebrationsDark.test.js
+  // runs the real gate with DEV false and checks what stays hidden).
+  it("keeps the master switch in a production build, where celebrations start dark", () => {
+    expect(productionScripts).toContain("tipTracker(celebrations).live");
+    expect(productionScripts).not.toContain("import.meta.env.DEV");
+  });
 });

@@ -3,6 +3,7 @@ import { RouterLink } from "vue-router";
 import ColorThemeMenu from "../components/ColorThemeMenu.vue";
 import { BackupService } from "../scripts/BackupService";
 import { describePackSyncStatus, getPackSyncStatus } from "../scripts/CelebrationPackStatus";
+import { isCelebrationsLive } from "../scripts/CelebrationsLive";
 
 const emit = defineEmits(["close"]);
 
@@ -10,7 +11,9 @@ const emit = defineEmits(["close"]);
 // so a plain read is always fresh.
 const lastBackup = BackupService.getLastBackupInfo();
 
-const packStatus = getPackSyncStatus();
+// While celebrations are dark (the surprise is off) the menu shows nothing about them.
+const isLive = isCelebrationsLive();
+const packStatus = isLive ? getPackSyncStatus() : null;
 
 function formatBackupTime(time) {
   const monthDay = time.toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -29,7 +32,7 @@ function formatBackupTime(time) {
         >Stats Page</router-link
       >
       <ColorThemeMenu />
-      <router-link class="quietLink" to="/celebration-setup" @click="() => $emit('close')"
+      <router-link v-if="isLive" class="quietLink" to="/celebration-setup" @click="() => $emit('close')"
         >Celebration Setup</router-link
       >
       <div v-if="lastBackup" class="lastSaved">

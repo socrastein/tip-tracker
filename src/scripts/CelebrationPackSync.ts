@@ -4,6 +4,7 @@ import { recordPackSyncStatus } from "./CelebrationPackStatus";
 import type { PackSyncStatus } from "./CelebrationPackStatus";
 import { MAX_PACK_CLIP_SECONDS } from "./CelebrationClip";
 import { celebrationState } from "./CelebrationState";
+import { recordLiveSetting } from "./CelebrationsLive";
 
 /**
  * Keeps the device's copy of the celebration pack in step with the PUBLISHED
@@ -78,6 +79,7 @@ export interface PackSyncDependencies {
   hasRoomFor?: (bytes: number) => Promise<boolean>;
   onChanged?: () => void;
   recordStatus?: (status: PackSyncStatus) => void;
+  recordLive?: (isLive: boolean) => void; // told the manifest's master switch (see CelebrationsLive.ts)
   caps?: { maxFileBytes: number; maxTotalBytes: number };
 }
 
@@ -306,10 +308,27 @@ async function syncCelebrations(
   return progress;
 }
 
-/** Fetch the manifest; null when the server did not give a usable one. */
-async function fetchManifest(dependencies: PackSyncDependencies): Promise<ManifestCelebration[] | null> {
+/**
+ * The master switch in a manifest body.
+ * @returns true or false as the server says, or null when the body does not say (an older server): the phone's setting then stays as it was
+ */
+export function parseLiveSetting(body: unknown): boolean | null {
+  const live = (body as { live?: unknown } | null)?.live;
+  return typeof live === "boolean" ? live : null;
+}
+
+/**
+ * Fetch the manifest and remember its master switch; null when the server
+ * did not give a usable manifest. The switch is recorded even if the pack
+ * then fails to sync, so going live or dark never waits on a download.
+ */
+async function fetchManifest(dependencies: Required<PackSyncDependencies>): Promise<ManifestCelebration[] | null> {
   const response = await dependencies.fetchWithTimeout(`${dependencies.serverUrl}/tipApp/celebrations`, MANIFEST_TIMEOUT_MS);
-  return response.ok ? parseManifest(await response.json()) : null;
+  if (!response.ok) return null;
+  const body: unknown = await response.json();
+  const isLive = parseLiveSetting(body);
+  if (isLive !== null) dependencies.recordLive(isLive);
+  return parseManifest(body);
 }
 
 /**
@@ -349,6 +368,7 @@ function withDefaults(dependencies: PackSyncDependencies): Required<PackSyncDepe
     hasRoomFor: browserHasRoomFor,
     onChanged: () => {},
     recordStatus: recordPackSyncStatus,
+    recordLive: recordLiveSetting,
     caps: {
       maxFileBytes: PACK_MAX_FILE_BYTES,
       maxTotalBytes: PACK_MAX_TOTAL_BYTES,

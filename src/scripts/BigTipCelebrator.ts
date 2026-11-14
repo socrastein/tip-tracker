@@ -14,6 +14,7 @@ import { getGifPreloader } from "./GifPreloader";
 import { getPackCelebrations, getPackImageUrls } from "./CelebrationPackRuntime";
 import { MIN_CLIP_CELEBRATION_MS, playClipCelebration } from "./CelebrationClip";
 import { planPackCelebration } from "./PackCelebrationPlan";
+import { isCelebrationsLive } from "./CelebrationsLive";
 
 /**
  * Starts the celebration after a big tip has been saved. Everything here is
@@ -79,6 +80,7 @@ const CUSTOM_EXTRA_MS = 1000; // the picture and bills outlast a clip a little
  * @param name  the celebration to play
  */
 export function playCelebration(name: CelebrationName): void {
+  if (!isCelebrationsLive()) return; // dark: no sound unlock, no overlay
   if (isPackCelebration(name)) {
     playPackCelebration(name);
     return;
@@ -139,9 +141,10 @@ function playPackCelebration(name: CelebrationName): void {
 }
 
 /**
- * Celebrate if the saved tip earned it. Call it right after the tip has been
- * stored, from inside the Confirm tap's handler (so sound is allowed).
- * Failures are logged and swallowed.
+ * Celebrate if the saved tip earned it and celebrations are live on this
+ * phone (see CelebrationsLive.ts; dark means nothing happens). Call it right
+ * after the tip has been stored, from inside the Confirm tap's handler (so
+ * sound is allowed). Failures are logged and swallowed.
  * @param previousAmount  the tip's amount before this save, undefined for a new tip
  * @param newAmount  the amount just saved
  * @param play  how a chosen celebration is played (injectable for tests)
@@ -152,6 +155,7 @@ export function celebrateIfBigTip(
   play: (name: CelebrationName) => void = playCelebration,
 ): void {
   try {
+    if (!isCelebrationsLive()) return; // the surprise is off: nothing at all happens on any tip
     if (!shouldCelebrate(previousAmount, newAmount)) return;
     const name = pickNextCelebration(availableCelebrations(), readLastCelebration());
     rememberLastCelebration(name);
